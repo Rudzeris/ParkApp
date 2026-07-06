@@ -45,6 +45,18 @@
         <Reference Include="WindowsBase"/>
         <Reference Include="PresentationCore"/>
         <Reference Include="PresentationFramework"/>
+        <Reference Include="Xceed.Document.NET, Version=2.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+          <HintPath>..\packages\DocX.2.2.0\lib\net40\Xceed.Document.NET.dll</HintPath>
+        </Reference>
+        <Reference Include="Xceed.Drawing.NET, Version=1.0.26322.8460, Culture=neutral, PublicKeyToken=ba83ff368b7563c6, processorArchitecture=MSIL">
+          <HintPath>..\packages\Xceed.Drawing.NET.1.0.26322.8460\lib\net40\Xceed.Drawing.NET.dll</HintPath>
+        </Reference>
+        <Reference Include="Xceed.Pdf, Version=6.0.26322.8460, Culture=neutral, PublicKeyToken=ba83ff368b7563c6, processorArchitecture=MSIL">
+          <HintPath>..\packages\Xceed.Pdf.6.0.26322.8460\lib\net40\Xceed.Pdf.dll</HintPath>
+        </Reference>
+        <Reference Include="Xceed.Words.NET, Version=2.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+          <HintPath>..\packages\DocX.2.2.0\lib\net40\Xceed.Words.NET.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
         <ApplicationDefinition Include="App.xaml">
@@ -80,6 +92,7 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="App.config"/>
+        <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
