@@ -1,0 +1,44 @@
+﻿## Ignore Visual Studio temporary files, build results, and add-on generated files
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+# Visual Studio cache/options
+vs/
+vscode/
+# MSTest test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+# NUNIT
+*.VisualState.xml
+TestResult.xml
+# .NET Core artifacts
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+# NuGet Packages
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+# Node.js dependencies (if applicable)
+node_modules/
+# ClickOnce publish directory
+publish/
+# OS generated files
+DS_Store
+Thumbs.db
+# WPF specific generated code
+Generated_Code/
