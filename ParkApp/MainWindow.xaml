@@ -7,6 +7,15 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button Click="ButtonBase_OnClick">Click me</Button>
+        <ListView ItemsSource="{Binding Cars}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Модель" DisplayMemberBinding="{Binding Model}" />
+                    <GridViewColumn Header="VIN" DisplayMemberBinding="{Binding Vin}" />
+                    <GridViewColumn Header="Год" DisplayMemberBinding="{Binding Year}" />
+                    <GridViewColumn Header="Местонахождение" DisplayMemberBinding="{Binding Location}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
     </Grid>
 </Window>
