@@ -7,13 +7,13 @@ using ParkApp.components.Application;
 namespace ParkApp.components.Infrastructure
 {
     /// <summary>
-    /// Сканы лежат в файловой системе: Scans/&lt;раздел&gt;/&lt;ключ записи&gt;.&lt;расширение&gt;.
-    /// В записях хранится относительный путь — тогда каталог данных можно перенести
+    /// Сканы лежат рядом со своей таблицей: «Штрафы\Сканы\&lt;номер постановления&gt;.pdf».
+    /// В записи хранится относительный путь — тогда всю папку данных можно перенести
     /// на другой ПК или на сетевую шару без правки ссылок.
     /// </summary>
     public class FileScanStorage : IScanStorage
     {
-        public string Attach(string category, string entityKey, string sourceFilePath)
+        public string Attach(ScanCategory category, string entityKey, string sourceFilePath)
         {
             if (string.IsNullOrWhiteSpace(sourceFilePath))
                 throw new ArgumentException("Не указан файл скана.", "sourceFilePath");
@@ -22,10 +22,10 @@ namespace ParkApp.components.Infrastructure
                 throw new FileNotFoundException("Файл скана не найден.", sourceFilePath);
 
             var fileName = MakeSafe(entityKey) + Path.GetExtension(sourceFilePath);
-            var relativePath = Path.Combine("Scans", MakeSafe(category), fileName);
+            var relativePath = Path.Combine(AppPaths.ScansRelativeFolder(FolderFor(category)), fileName);
             var fullPath = Path.Combine(AppPaths.DataRoot, relativePath);
 
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            AppPaths.EnsureFolderFor(fullPath);
 
             // именно копирование: исходник пользователя должен остаться на месте
             File.Copy(sourceFilePath, fullPath, true);
@@ -61,6 +61,21 @@ namespace ParkApp.components.Infrastructure
             var fullPath = GetFullPath(relativePath);
             if (fullPath != null && File.Exists(fullPath))
                 File.Delete(fullPath);
+        }
+
+        private static string FolderFor(ScanCategory category)
+        {
+            switch (category)
+            {
+                case ScanCategory.Car:
+                    return AppPaths.CarsFolderName;
+                case ScanCategory.Insurance:
+                    return AppPaths.InsurancesFolderName;
+                case ScanCategory.Maintenance:
+                    return AppPaths.MaintenanceFolderName;
+                default:
+                    return AppPaths.FinesFolderName;
+            }
         }
 
         /// <summary>Убирает из имени символы, недопустимые в файловой системе.</summary>

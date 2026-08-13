@@ -1,33 +1,74 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 
 namespace ParkApp.components.Infrastructure
 {
     /// <summary>
-    /// Единая точка, где приложение решает, куда класть данные и сканы.
-    /// При переезде на сервер меняется только этот класс и реализации репозиториев.
+    /// Раскладка данных на диске:
+    /// <code>
+    /// &lt;корень данных&gt;/
+    /// ├── Машины/
+    /// │   ├── Машины.xlsx
+    /// │   └── Сканы/          СРТС, ПТС
+    /// └── Штрафы/
+    ///     ├── Штрафы.xlsx
+    ///     └── Сканы/          постановления
+    /// </code>
+    /// Корень задаётся в App.config (ключ DataRoot). Пустое значение — каталог приложения.
+    /// Отдельная настройка нужна, чтобы позже перевести данные на сетевую шару без пересборки.
     /// </summary>
     public static class AppPaths
     {
-        /// <summary>
-        /// Корень данных. Взят каталог приложения, а не текущий каталог процесса:
-        /// текущий каталог может незаметно измениться после системных диалогов.
-        /// </summary>
+        public const string CarsFolderName = "Машины";
+        public const string FinesFolderName = "Штрафы";
+        public const string InsurancesFolderName = "Страховки";
+        public const string MaintenanceFolderName = "ТО";
+        public const string ScansFolderName = "Сканы";
+
+        public const string CarsFileName = "Машины.xlsx";
+        public const string FinesFileName = "Штрафы.xlsx";
+
+        /// <summary>Корень данных. Относительный путь из настройки считается от каталога приложения.</summary>
         public static string DataRoot
         {
-            get { return AppDomain.CurrentDomain.BaseDirectory; }
+            get
+            {
+                var configured = ConfigurationManager.AppSettings["DataRoot"];
+                var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+                if (string.IsNullOrWhiteSpace(configured))
+                    return baseDirectory;
+
+                configured = configured.Trim();
+                return Path.IsPathRooted(configured)
+                    ? configured
+                    : Path.Combine(baseDirectory, configured);
+            }
         }
 
-        /// <summary>Корень хранилища сканов.</summary>
-        public static string ScansRoot
+        public static string CarsFile
         {
-            get { return Path.Combine(DataRoot, "Scans"); }
+            get { return Path.Combine(DataRoot, CarsFolderName, CarsFileName); }
         }
 
-        /// <summary>Полный путь к файлу данных в корне.</summary>
-        public static string DataFile(string fileName)
+        public static string FinesFile
         {
-            return Path.Combine(DataRoot, fileName);
+            get { return Path.Combine(DataRoot, FinesFolderName, FinesFileName); }
+        }
+
+        /// <summary>Папка сканов раздела относительно корня данных, например «Штрафы\Сканы».</summary>
+        public static string ScansRelativeFolder(string sectionFolderName)
+        {
+            return Path.Combine(sectionFolderName, ScansFolderName);
+        }
+
+        /// <summary>Создаёт каталог для файла, если его ещё нет.</summary>
+        public static void EnsureFolderFor(string filePath)
+        {
+            var folder = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(folder))
+                Directory.CreateDirectory(folder);
         }
     }
 }

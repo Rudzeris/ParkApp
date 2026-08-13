@@ -39,9 +39,12 @@
           <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
         </Reference>
         <Reference Include="System"/>
+        <Reference Include="System.Configuration"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
+        <Reference Include="System.IO.Compression"/>
         <Reference Include="System.Xml"/>
+        <Reference Include="System.Xml.Linq"/>
         <Reference Include="System.Xaml">
             <RequiredTargetFramework>4.0</RequiredTargetFramework>
         </Reference>
@@ -90,15 +93,21 @@
         <Compile Include="components\Application\IFileDialogService.cs" />
         <Compile Include="components\Application\IFineRepository.cs" />
         <Compile Include="components\Application\IScanStorage.cs" />
+        <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Domain\Car.cs" />
         <Compile Include="components\Domain\CarNumber.cs" />
         <Compile Include="components\Domain\Fine.cs" />
         <Compile Include="components\Domain\Location.cs" />
         <Compile Include="components\Domain\NumberType.cs" />
         <Compile Include="components\Infrastructure\AppPaths.cs" />
+        <Compile Include="components\Infrastructure\Excel\SheetTable.cs" />
+        <Compile Include="components\Infrastructure\Excel\XlsxCell.cs" />
+        <Compile Include="components\Infrastructure\Excel\XlsxReader.cs" />
+        <Compile Include="components\Infrastructure\Excel\XlsxWriter.cs" />
+        <Compile Include="components\Infrastructure\ExcelCarRepository.cs" />
+        <Compile Include="components\Infrastructure\ExcelFineRepository.cs" />
         <Compile Include="components\Infrastructure\FileScanStorage.cs" />
         <Compile Include="components\Infrastructure\JsonCarRepository.cs" />
-        <Compile Include="components\Infrastructure\JsonFineRepository.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
         <Compile Include="components\View\FineEditWindow.xaml.cs">
             <DependentUpon>FineEditWindow.xaml</DependentUpon>

@@ -20,8 +20,10 @@ namespace ParkApp
 
         public static void Initialize()
         {
-            ICarRepository carRepository = new JsonCarRepository();
-            IFineRepository fineRepository = new JsonFineRepository();
+            // хранилище выбирается здесь и только здесь: замена Excel на БД —
+            // это две строки ниже, остальные слои не меняются
+            ICarRepository carRepository = new ExcelCarRepository();
+            IFineRepository fineRepository = new ExcelFineRepository();
 
             Cars = new CarService(carRepository);
             Fines = new FineService(fineRepository);

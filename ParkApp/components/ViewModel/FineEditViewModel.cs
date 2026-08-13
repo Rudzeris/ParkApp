@@ -18,8 +18,6 @@ namespace ParkApp.components.ViewModel
     /// </summary>
     public class FineEditViewModel : ViewModelBase
     {
-        private const string ScanCategory = "Fines";
-
         private readonly FineService _fines;
         private readonly IScanStorage _scans;
         private readonly IFileDialogService _fileDialogs;
@@ -200,7 +198,7 @@ namespace ParkApp.components.ViewModel
 
             try
             {
-                ScanPath = _scans.Attach(ScanCategory, number, path);
+                ScanPath = _scans.Attach(ScanCategory.Fine, number, path);
                 Errors.Clear();
                 OnPropertyChanged("HasErrors");
             }
