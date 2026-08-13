@@ -70,18 +70,52 @@
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
         </Page>
+        <Page Include="components\View\FinesWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <SubType>Designer</SubType>
+        </Page>
+        <Page Include="components\View\FineEditWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <SubType>Designer</SubType>
+        </Page>
         <Compile Include="App.xaml.cs">
             <DependentUpon>App.xaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
+        <Compile Include="AppServices.cs" />
         <Compile Include="components\Application\CarService.cs" />
+        <Compile Include="components\Application\FineFilter.cs" />
+        <Compile Include="components\Application\FineService.cs" />
         <Compile Include="components\Application\ICarRepository.cs" />
+        <Compile Include="components\Application\IFileDialogService.cs" />
+        <Compile Include="components\Application\IFineRepository.cs" />
+        <Compile Include="components\Application\IScanStorage.cs" />
         <Compile Include="components\Domain\Car.cs" />
         <Compile Include="components\Domain\CarNumber.cs" />
+        <Compile Include="components\Domain\Fine.cs" />
         <Compile Include="components\Domain\Location.cs" />
         <Compile Include="components\Domain\NumberType.cs" />
+        <Compile Include="components\Infrastructure\AppPaths.cs" />
+        <Compile Include="components\Infrastructure\FileScanStorage.cs" />
         <Compile Include="components\Infrastructure\JsonCarRepository.cs" />
+        <Compile Include="components\Infrastructure\JsonFineRepository.cs" />
+        <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
+        <Compile Include="components\View\FineEditWindow.xaml.cs">
+            <DependentUpon>FineEditWindow.xaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
+        <Compile Include="components\View\FinesWindow.xaml.cs">
+            <DependentUpon>FinesWindow.xaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
+        <Compile Include="components\View\WpfFineDialogService.cs" />
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
+        <Compile Include="components\ViewModel\CarOption.cs" />
+        <Compile Include="components\ViewModel\FineEditViewModel.cs" />
+        <Compile Include="components\ViewModel\FineListViewModel.cs" />
+        <Compile Include="components\ViewModel\FineRowViewModel.cs" />
+        <Compile Include="components\ViewModel\IFineDialogService.cs" />
+        <Compile Include="components\ViewModel\RelayCommand.cs" />
         <Compile Include="components\ViewModel\ViewModelBase.cs" />
         <Compile Include="MainWindow.xaml.cs">
             <DependentUpon>MainWindow.xaml</DependentUpon>

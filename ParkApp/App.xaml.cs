@@ -1,7 +1,4 @@
 using System.Windows;
-using ParkApp.components.Application;
-using ParkApp.components.Infrastructure;
-using ParkApp.components.ViewModel;
 
 namespace ParkApp
 {
@@ -14,15 +11,11 @@ namespace ParkApp
         {
             base.OnStartup(e);
 
-            ICarRepository repo = new JsonCarRepository();
+            AppServices.Initialize();
 
-            CarService carService = new CarService(repo);
-
-            var vm = new CarListViewModel(carService);
-
-            var window = new MainWindow()
+            var window = new MainWindow
             {
-                DataContext = vm
+                DataContext = AppServices.CreateCarListViewModel()
             };
 
             window.Show();
