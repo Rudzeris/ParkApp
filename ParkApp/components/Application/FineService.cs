@@ -30,8 +30,8 @@ namespace ParkApp.components.Application
                 if (!string.IsNullOrWhiteSpace(filter.CarVin))
                     query = query.Where(f => string.Equals(f.CarVin, filter.CarVin, StringComparison.OrdinalIgnoreCase));
 
-                if (!string.IsNullOrWhiteSpace(filter.DriverName))
-                    query = query.Where(f => Contains(f.DriverName, filter.DriverName));
+                if (filter.DriverId.HasValue)
+                    query = query.Where(f => f.DriverId == filter.DriverId.Value);
 
                 if (filter.From.HasValue)
                 {
@@ -60,21 +60,6 @@ namespace ParkApp.components.Application
 
         /// <summary>Итоговая сумма по набору штрафов.</summary>
         public decimal GetTotal(IEnumerable<Fine> fines) => fines == null ? 0m : fines.Sum(f => f.Amount);
-
-        /// <summary>
-        /// Водители, которые уже встречались в штрафах — для подсказки при вводе.
-        /// Пока водитель хранится строкой, это единственная защита от разнобоя в ФИО.
-        /// </summary>
-        public async Task<IReadOnlyList<string>> GetKnownDriversAsync()
-        {
-            var all = await _repo.GetAllAsync();
-            return all
-                .Select(f => (f.DriverName ?? string.Empty).Trim())
-                .Where(name => name.Length > 0)
-                .Distinct(StringComparer.CurrentCultureIgnoreCase)
-                .OrderBy(name => name)
-                .ToList();
-        }
 
         /// <summary>
         /// Проверяет штраф. Пустой список — ошибок нет.
@@ -155,7 +140,6 @@ namespace ParkApp.components.Application
         {
             fine.ResolutionNumber = (fine.ResolutionNumber ?? string.Empty).Trim();
             fine.ViolationPlace = Trim(fine.ViolationPlace);
-            fine.DriverName = Trim(fine.DriverName);
             fine.CarVin = (fine.CarVin ?? string.Empty).Trim();
             fine.ResolutionDate = fine.ResolutionDate.Date;
             fine.ViolationDate = fine.ViolationDate.Date;

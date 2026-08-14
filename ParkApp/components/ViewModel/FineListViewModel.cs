@@ -16,17 +16,20 @@ namespace ParkApp.components.ViewModel
     {
         private readonly FineService _fines;
         private readonly CarService _cars;
+        private readonly PersonService _people;
         private readonly IScanStorage _scans;
         private readonly IFineDialogService _dialogs;
         private readonly IFileDialogService _fileDialogs;
 
         private List<Car> _allCars = new List<Car>();
+        private List<Person> _allPeople = new List<Person>();
         private Dictionary<string, Car> _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
+        private IDictionary<int, Person> _peopleById = new Dictionary<int, Person>();
         private bool _isLoading;
         private bool _reloadRequested;
 
         private CarOption _selectedCarOption;
-        private string _driverFilter;
+        private PersonOption _selectedDriverOption;
         private DateTime? _dateFrom;
         private DateTime? _dateTo;
         private string _textFilter;
@@ -37,18 +40,21 @@ namespace ParkApp.components.ViewModel
         public FineListViewModel(
             FineService fines,
             CarService cars,
+            PersonService people,
             IScanStorage scans,
             IFineDialogService dialogs,
             IFileDialogService fileDialogs)
         {
             _fines = fines;
             _cars = cars;
+            _people = people;
             _scans = scans;
             _dialogs = dialogs;
             _fileDialogs = fileDialogs;
 
             Fines = new ObservableCollection<FineRowViewModel>();
             CarOptions = new ObservableCollection<CarOption>();
+            DriverOptions = new ObservableCollection<PersonOption>();
 
             AddCommand = new RelayCommand(o => Add());
             EditCommand = new RelayCommand(o => Edit(), o => SelectedFine != null);
@@ -60,6 +66,7 @@ namespace ParkApp.components.ViewModel
 
         public ObservableCollection<FineRowViewModel> Fines { get; private set; }
         public ObservableCollection<CarOption> CarOptions { get; private set; }
+        public ObservableCollection<PersonOption> DriverOptions { get; private set; }
 
         public ICommand AddCommand { get; private set; }
         public ICommand EditCommand { get; private set; }
@@ -74,10 +81,10 @@ namespace ParkApp.components.ViewModel
             set { if (SetProperty(ref _selectedCarOption, value)) Reload(); }
         }
 
-        public string DriverFilter
+        public PersonOption SelectedDriverOption
         {
-            get { return _driverFilter; }
-            set { if (SetProperty(ref _driverFilter, value)) Reload(); }
+            get { return _selectedDriverOption; }
+            set { if (SetProperty(ref _selectedDriverOption, value)) Reload(); }
         }
 
         public DateTime? DateFrom
@@ -140,6 +147,18 @@ namespace ParkApp.components.ViewModel
                 _selectedCarOption = CarOptions[0];
                 OnPropertyChanged("SelectedCarOption");
 
+                var people = await _people.GetAllAsync();
+                _allPeople = people.ToList();
+                _peopleById = await _people.GetByIdAsync();
+
+                DriverOptions.Clear();
+                DriverOptions.Add(new PersonOption(null, "— все водители —"));
+                foreach (var person in _allPeople)
+                    DriverOptions.Add(PersonOption.ForPerson(person));
+
+                _selectedDriverOption = DriverOptions[0];
+                OnPropertyChanged("SelectedDriverOption");
+
                 await ReloadAsync();
             }
             catch (Exception ex)
@@ -186,7 +205,7 @@ namespace ParkApp.components.ViewModel
                 var filter = new FineFilter
                 {
                     CarVin = _selectedCarOption != null ? _selectedCarOption.Vin : null,
-                    DriverName = DriverFilter,
+                    DriverId = _selectedDriverOption != null ? _selectedDriverOption.Id : null,
                     From = DateFrom,
                     To = DateTo,
                     Text = TextFilter
@@ -201,7 +220,12 @@ namespace ParkApp.components.ViewModel
                 {
                     Car car;
                     _carsByVin.TryGetValue((fine.CarVin ?? string.Empty).Trim(), out car);
-                    Fines.Add(new FineRowViewModel(fine, car, _scans.Exists(fine.ScanPath)));
+
+                    Person driver = null;
+                    if (fine.DriverId.HasValue)
+                        _peopleById.TryGetValue(fine.DriverId.Value, out driver);
+
+                    Fines.Add(new FineRowViewModel(fine, car, driver, _scans.Exists(fine.ScanPath)));
                 }
 
                 if (selectedNumber != null)
@@ -219,13 +243,13 @@ namespace ParkApp.components.ViewModel
         private void ResetFilter()
         {
             _selectedCarOption = CarOptions.Count > 0 ? CarOptions[0] : null;
-            _driverFilter = null;
+            _selectedDriverOption = DriverOptions.Count > 0 ? DriverOptions[0] : null;
             _dateFrom = null;
             _dateTo = null;
             _textFilter = null;
 
             OnPropertyChanged("SelectedCarOption");
-            OnPropertyChanged("DriverFilter");
+            OnPropertyChanged("SelectedDriverOption");
             OnPropertyChanged("DateFrom");
             OnPropertyChanged("DateTo");
             OnPropertyChanged("TextFilter");
@@ -259,7 +283,7 @@ namespace ParkApp.components.ViewModel
 
         private void ShowEditor(Fine fine, bool isNew)
         {
-            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, fine, isNew);
+            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, _allPeople, fine, isNew);
             if (_dialogs.ShowEditor(editor))
                 Reload();
         }
@@ -320,7 +344,7 @@ namespace ParkApp.components.ViewModel
                 ViolationDate = source.ViolationDate,
                 ViolationPlace = source.ViolationPlace,
                 CarVin = source.CarVin,
-                DriverName = source.DriverName,
+                DriverId = source.DriverId,
                 Amount = source.Amount,
                 ScanPath = source.ScanPath
             };

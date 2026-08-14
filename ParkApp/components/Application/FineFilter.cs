@@ -10,8 +10,8 @@ namespace ParkApp.components.Application
         /// <summary>VIN машины.</summary>
         public string CarVin { get; set; }
 
-        /// <summary>Часть ФИО водителя.</summary>
-        public string DriverName { get; set; }
+        /// <summary>Водитель: ссылка на Person.Id.</summary>
+        public int? DriverId { get; set; }
 
         /// <summary>Начало периода по дате нарушения (включительно).</summary>
         public DateTime? From { get; set; }

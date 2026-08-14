@@ -1,26 +1,30 @@
 ﻿using System;
+using ParkApp.components.Application;
 using ParkApp.components.Domain;
 
 namespace ParkApp.components.ViewModel
 {
     /// <summary>
-    /// Строка списка штрафов: сам штраф плюс данные машины, подтянутые по VIN.
+    /// Строка списка штрафов: сам штраф плюс машина по VIN и водитель по номеру
+    /// из справочника людей.
     /// </summary>
     public class FineRowViewModel
     {
-        public FineRowViewModel(Fine fine, Car car, bool hasScan)
+        public FineRowViewModel(Fine fine, Car car, Person driver, bool hasScan)
         {
             Fine = fine;
             Car = car;
+            Driver = driver;
             HasScan = hasScan;
 
-            // ссылка может «повиснуть», если машину удалили — показываем это вместо падения
+            // ссылка может «повиснуть», если машину убрали из таблицы — показываем это вместо падения
             CarModel = car != null ? CarOption.ModelText(car) : "машина не найдена";
             CarPlates = car != null ? CarOption.Plates(car.Numbers) : fine.CarVin;
         }
 
         public Fine Fine { get; private set; }
         public Car Car { get; private set; }
+        public Person Driver { get; private set; }
         public bool HasScan { get; private set; }
 
         public string CarModel { get; private set; }
@@ -38,7 +42,16 @@ namespace ParkApp.components.ViewModel
 
         public string DriverName
         {
-            get { return string.IsNullOrWhiteSpace(Fine.DriverName) ? "не установлен" : Fine.DriverName; }
+            get
+            {
+                var described = PersonService.Describe(Driver);
+                if (described != null)
+                    return described;
+
+                return Fine.DriverId.HasValue
+                    ? string.Format("не найден (№ {0})", Fine.DriverId.Value)
+                    : "не установлен";
+            }
         }
 
         /// <summary>Отметка о вложенном скане постановления.</summary>

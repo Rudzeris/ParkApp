@@ -25,7 +25,7 @@ namespace ParkApp.components.Infrastructure
             "Дата постановления",
             "Дата нарушения",
             "VIN машины",
-            "Водитель",
+            "Водитель (№ из таблицы Люди)",
             "Место нарушения",
             "Сумма, руб.",
             "Скан постановления"
@@ -122,7 +122,7 @@ namespace ParkApp.components.Infrastructure
             var resolutionDateColumn = sheet.Column("Дата постановления");
             var violationDateColumn = sheet.Column("Дата нарушения");
             var vinColumn = sheet.Column("VIN машины", "VIN", "Машина", "ВИН");
-            var driverColumn = sheet.Column("Водитель");
+            var driverColumn = sheet.Column("Водитель (№ из таблицы Люди)", "Водитель", "Водитель №");
             var placeColumn = sheet.Column("Место нарушения", "Место");
             var amountColumn = sheet.Column("Сумма, руб.", "Сумма");
             var scanColumn = sheet.Column("Скан постановления", "Скан", "Файл");
@@ -143,7 +143,7 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = SheetTable.GetDate(row, resolutionDateColumn) ?? default(DateTime),
                     ViolationDate = SheetTable.GetDate(row, violationDateColumn) ?? default(DateTime),
                     CarVin = SheetTable.GetString(row, vinColumn),
-                    DriverName = SheetTable.GetString(row, driverColumn),
+                    DriverId = SheetTable.GetInt(row, driverColumn),
                     ViolationPlace = SheetTable.GetString(row, placeColumn),
                     Amount = SheetTable.GetDecimal(row, amountColumn) ?? 0m,
                     ScanPath = SheetTable.GetString(row, scanColumn)
@@ -164,7 +164,7 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Date(f.ResolutionDate),
                     XlsxCell.Date(f.ViolationDate),
                     XlsxCell.Text(f.CarVin),
-                    XlsxCell.Text(f.DriverName),
+                    XlsxCell.Number(f.DriverId),
                     XlsxCell.Text(f.ViolationPlace),
                     XlsxCell.Money(f.Amount),
                     XlsxCell.Text(f.ScanPath)
@@ -196,7 +196,7 @@ namespace ParkApp.components.Infrastructure
                     ViolationDate = today.AddDays(-25),
                     ViolationPlace = "г. Казань, пр. Победы, 12",
                     CarVin = "XTT316300E0012345",
-                    DriverName = "Петров Пётр Петрович",
+                    DriverId = 2,
                     Amount = 500m
                 },
                 new Fine
@@ -206,7 +206,7 @@ namespace ParkApp.components.Infrastructure
                     ViolationDate = today.AddDays(-10),
                     ViolationPlace = "трасса М-7, 812 км",
                     CarVin = "X1F53500J0000123",
-                    DriverName = "Сидоров Сидор Сидорович",
+                    DriverId = 3,
                     Amount = 1500m
                 },
                 new Fine

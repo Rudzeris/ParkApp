@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using ParkApp.components.Application;
 using ParkApp.components.Domain;
@@ -28,7 +27,7 @@ namespace ParkApp.components.ViewModel
         private DateTime? _resolutionDate;
         private DateTime? _violationDate;
         private string _violationPlace;
-        private string _driverName;
+        private PersonOption _selectedDriver;
         private string _amountText;
         private CarOption _selectedCar;
         private string _scanPath;
@@ -38,6 +37,7 @@ namespace ParkApp.components.ViewModel
             IScanStorage scans,
             IFileDialogService fileDialogs,
             IEnumerable<Car> cars,
+            IEnumerable<Person> people,
             Fine fine,
             bool isNew)
         {
@@ -48,17 +48,21 @@ namespace ParkApp.components.ViewModel
             _isNew = isNew;
 
             Cars = new ObservableCollection<CarOption>();
-            KnownDrivers = new ObservableCollection<string>();
+            Drivers = new ObservableCollection<PersonOption>();
             Errors = new ObservableCollection<string>();
 
             foreach (var car in cars ?? Enumerable.Empty<Car>())
                 Cars.Add(CarOption.ForCar(car));
 
+            Drivers.Add(new PersonOption(null, "— не установлен —"));
+            foreach (var person in people ?? Enumerable.Empty<Person>())
+                Drivers.Add(PersonOption.ForPerson(person));
+
             _resolutionNumber = fine.ResolutionNumber;
             _resolutionDate = fine.ResolutionDate == default(DateTime) ? (DateTime?)null : fine.ResolutionDate;
             _violationDate = fine.ViolationDate == default(DateTime) ? (DateTime?)null : fine.ViolationDate;
             _violationPlace = fine.ViolationPlace;
-            _driverName = fine.DriverName;
+            _selectedDriver = Drivers.FirstOrDefault(d => d.Id == fine.DriverId) ?? Drivers[0];
             _amountText = fine.Amount > 0m ? fine.Amount.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
             _scanPath = fine.ScanPath;
             _selectedCar = Cars.FirstOrDefault(c => string.Equals(c.Vin, fine.CarVin, StringComparison.OrdinalIgnoreCase));
@@ -74,7 +78,7 @@ namespace ParkApp.components.ViewModel
         public event EventHandler<bool> RequestClose;
 
         public ObservableCollection<CarOption> Cars { get; private set; }
-        public ObservableCollection<string> KnownDrivers { get; private set; }
+        public ObservableCollection<PersonOption> Drivers { get; private set; }
         public ObservableCollection<string> Errors { get; private set; }
 
         public ICommand AttachScanCommand { get; private set; }
@@ -118,10 +122,10 @@ namespace ParkApp.components.ViewModel
             set { SetProperty(ref _violationPlace, value); }
         }
 
-        public string DriverName
+        public PersonOption SelectedDriver
         {
-            get { return _driverName; }
-            set { SetProperty(ref _driverName, value); }
+            get { return _selectedDriver; }
+            set { SetProperty(ref _selectedDriver, value); }
         }
 
         public string AmountText
@@ -162,22 +166,6 @@ namespace ParkApp.components.ViewModel
         public bool HasErrors
         {
             get { return Errors.Count > 0; }
-        }
-
-        /// <summary>Подтягивает подсказки по водителям. Вызывается после открытия окна.</summary>
-        public async Task InitializeAsync()
-        {
-            try
-            {
-                var drivers = await _fines.GetKnownDriversAsync();
-                KnownDrivers.Clear();
-                foreach (var driver in drivers)
-                    KnownDrivers.Add(driver);
-            }
-            catch
-            {
-                // подсказки по водителям не критичны: без них форма работает
-            }
         }
 
         private void AttachScan()
@@ -252,7 +240,7 @@ namespace ParkApp.components.ViewModel
                     ViolationDate = ViolationDate ?? default(DateTime),
                     ViolationPlace = ViolationPlace,
                     CarVin = SelectedCar != null ? SelectedCar.Vin : null,
-                    DriverName = DriverName,
+                    DriverId = SelectedDriver != null ? SelectedDriver.Id : null,
                     Amount = amount,
                     ScanPath = ScanPath
                 };

@@ -53,10 +53,10 @@
 
         <TextBlock Grid.Row="4" Grid.Column="0" Text="Водитель:" Margin="0,6" VerticalAlignment="Center" />
         <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,6"
-                  IsEditable="True"
-                  ItemsSource="{Binding KnownDrivers}"
-                  Text="{Binding DriverName, UpdateSourceTrigger=PropertyChanged}"
-                  ToolTip="Можно оставить пустым, если водитель не установлен" />
+                  ItemsSource="{Binding Drivers}"
+                  DisplayMemberPath="Display"
+                  SelectedItem="{Binding SelectedDriver}"
+                  ToolTip="Из справочника людей. «Не установлен» — если виновник неизвестен" />
 
         <TextBlock Grid.Row="5" Grid.Column="0" Text="Место нарушения:" Margin="0,6" VerticalAlignment="Center" />
         <TextBox Grid.Row="5" Grid.Column="1" Margin="0,6"

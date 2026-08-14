@@ -23,8 +23,11 @@ namespace ParkApp.components.Domain
         /// <summary>VIN машины. Ссылка на <see cref="Car.Vin"/>.</summary>
         public string CarVin { get; set; }
 
-        /// <summary>ФИО водителя. Может быть пустым: постановление приходит на владельца.</summary>
-        public string DriverName { get; set; }
+        /// <summary>
+        /// Водитель — ссылка на <see cref="Person.Id"/>. Может быть пустой:
+        /// постановление приходит на владельца, и виновник не всегда установлен.
+        /// </summary>
+        public int? DriverId { get; set; }
 
         /// <summary>Сумма штрафа, руб.</summary>
         public decimal Amount { get; set; }

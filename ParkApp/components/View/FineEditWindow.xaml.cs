@@ -13,7 +13,6 @@ namespace ParkApp.components.View
             DataContext = viewModel;
 
             viewModel.RequestClose += OnRequestClose;
-            Loaded += async (sender, args) => await viewModel.InitializeAsync();
         }
 
         private void OnRequestClose(object sender, bool saved)

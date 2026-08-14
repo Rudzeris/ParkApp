@@ -28,8 +28,10 @@
                               SelectedItem="{Binding SelectedCarOption}" />
 
                     <TextBlock Text="Водитель:" VerticalAlignment="Center" Margin="16,0,6,0" />
-                    <TextBox Width="200"
-                             Text="{Binding DriverFilter, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                    <ComboBox Width="260"
+                              ItemsSource="{Binding DriverOptions}"
+                              DisplayMemberPath="Display"
+                              SelectedItem="{Binding SelectedDriverOption}" />
 
                     <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="16,0,6,0" />
                     <TextBox Width="220"
