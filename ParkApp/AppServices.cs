@@ -20,10 +20,16 @@ namespace ParkApp
         public static IFileDialogService FileDialogs { get; private set; }
         public static IFineDialogService FineDialogs { get; private set; }
         public static IMainDialogService MainDialogs { get; private set; }
+        public static IMessageService Messages { get; private set; }
+        public static ITableFileValidator TableFiles { get; private set; }
         public static IAppSettings Settings { get; private set; }
 
         public static void Initialize()
         {
+            // настройки читаются первыми: в них лежат пути, по которым работают репозитории
+            Settings = new XmlAppSettings();
+            AppPaths.UseSettings(Settings);
+
             // хранилище выбирается здесь и только здесь: замена Excel на БД —
             // это несколько строк ниже, остальные слои не меняются
             ICarRepository carRepository = new ExcelCarRepository();
@@ -39,7 +45,8 @@ namespace ParkApp
             Scans = new FileScanStorage();
             FileDialogs = new WpfFileDialogService();
             FineDialogs = new WpfFineDialogService();
-            Settings = new XmlAppSettings();
+            Messages = new WpfMessageService();
+            TableFiles = new ExcelTableValidator();
             MainDialogs = new WpfMainDialogService(CreateFineListViewModel);
         }
 
@@ -64,7 +71,7 @@ namespace ParkApp
 
         public static SettingsViewModel CreateSettingsViewModel()
         {
-            return new SettingsViewModel(Settings);
+            return new SettingsViewModel(Settings, FileDialogs, TableFiles, Messages, AppPaths.DefaultPath);
         }
     }
 }

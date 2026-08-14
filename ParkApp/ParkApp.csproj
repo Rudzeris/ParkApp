@@ -42,6 +42,7 @@
         <Reference Include="System.Configuration"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
+        <Reference Include="System.Windows.Forms"/>
         <Reference Include="System.IO.Compression"/>
         <Reference Include="System.Xml"/>
         <Reference Include="System.Xml.Linq"/>
@@ -101,8 +102,10 @@
         <Compile Include="components\Application\IFileDialogService.cs" />
         <Compile Include="components\Application\IFineRepository.cs" />
         <Compile Include="components\Application\IScanStorage.cs" />
+        <Compile Include="components\Application\ITableFileValidator.cs" />
         <Compile Include="components\Application\LookupList.cs" />
         <Compile Include="components\Application\LookupService.cs" />
+        <Compile Include="components\Application\PathSetting.cs" />
         <Compile Include="components\Application\PersonService.cs" />
         <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Domain\Car.cs" />
@@ -121,6 +124,7 @@
         <Compile Include="components\Infrastructure\ExcelFineRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelLookupRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelPersonRepository.cs" />
+        <Compile Include="components\Infrastructure\ExcelTableValidator.cs" />
         <Compile Include="components\Infrastructure\FileScanStorage.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
         <Compile Include="components\Infrastructure\XmlAppSettings.cs" />
@@ -137,6 +141,7 @@
             <SubType>Code</SubType>
         </Compile>
         <Compile Include="components\View\WpfFineDialogService.cs" />
+        <Compile Include="components\View\WpfMessageService.cs" />
         <Compile Include="components\View\WpfMainDialogService.cs" />
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
         <Compile Include="components\ViewModel\CarOption.cs" />
@@ -146,7 +151,9 @@
         <Compile Include="components\ViewModel\FineRowViewModel.cs" />
         <Compile Include="components\ViewModel\IFineDialogService.cs" />
         <Compile Include="components\ViewModel\IMainDialogService.cs" />
+        <Compile Include="components\ViewModel\IMessageService.cs" />
         <Compile Include="components\ViewModel\MainViewModel.cs" />
+        <Compile Include="components\ViewModel\PathSettingViewModel.cs" />
         <Compile Include="components\ViewModel\PaymentFilterOption.cs" />
         <Compile Include="components\ViewModel\PersonOption.cs" />
         <Compile Include="components\ViewModel\RelayCommand.cs" />

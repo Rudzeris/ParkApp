@@ -8,15 +8,18 @@ using ParkApp.components.Application;
 namespace ParkApp.components.Infrastructure
 {
     /// <summary>
-    /// Настройки в «Настройки.xml» рядом со своими документами.
-    /// Файл, а не реестр: рабочее место переносится копированием папки.
-    /// При первом запуске включены все готовые разделы.
+    /// Настройки в «Настройки.xml» рядом с приложением.
+    ///
+    /// Именно рядом с приложением, а не в папке данных: в настройках лежит путь
+    /// к этой самой папке, и класть их внутрь неё — замкнутый круг.
+    /// Файл, а не реестр: рабочее место переносится копированием каталога.
     /// </summary>
     public class XmlAppSettings : IAppSettings
     {
         private const string FileName = "Настройки.xml";
 
         private readonly HashSet<AppSection> _enabled = new HashSet<AppSection>();
+        private readonly Dictionary<PathSetting, string> _paths = new Dictionary<PathSetting, string>();
 
         public XmlAppSettings()
         {
@@ -25,7 +28,7 @@ namespace ParkApp.components.Infrastructure
 
         private static string FilePath
         {
-            get { return Path.Combine(AppPaths.DataRoot, FileName); }
+            get { return Path.Combine(AppPaths.AppFolder, FileName); }
         }
 
         public bool IsSectionEnabled(AppSection section)
@@ -46,17 +49,35 @@ namespace ParkApp.components.Infrastructure
                 _enabled.Remove(section);
         }
 
+        public string GetPath(PathSetting setting)
+        {
+            string value;
+            return _paths.TryGetValue(setting, out value) ? value : null;
+        }
+
+        public void SetPath(PathSetting setting, string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                _paths.Remove(setting);
+            else
+                _paths[setting] = path.Trim();
+        }
+
         public void Save()
         {
             var document = new XDocument(
-                new XComment(" Разделы, включённые на этом рабочем месте. Меняются в приложении: Настройки. "),
+                new XComment(" Настройки этого рабочего места. Меняются в приложении: Настройки. "),
                 new XElement("settings",
                     new XElement("sections",
                         SectionCatalog.All
                             .Where(s => s.IsAvailable)
                             .Select(s => new XElement("section",
                                 new XAttribute("name", s.Section.ToString()),
-                                new XAttribute("enabled", _enabled.Contains(s.Section)))))));
+                                new XAttribute("enabled", _enabled.Contains(s.Section))))),
+                    new XElement("paths",
+                        _paths.Select(pair => new XElement("path",
+                            new XAttribute("name", pair.Key.ToString()),
+                            new XAttribute("value", pair.Value))))));
 
             AppPaths.EnsureFolderFor(FilePath);
             document.Save(FilePath);
@@ -65,13 +86,11 @@ namespace ParkApp.components.Infrastructure
         private void Load()
         {
             _enabled.Clear();
+            _paths.Clear();
 
             if (!File.Exists(FilePath))
             {
-                // первый запуск: показываем всё, что готово
-                foreach (var section in SectionCatalog.All.Where(s => s.IsAvailable))
-                    _enabled.Add(section.Section);
-
+                EnableAvailableSections();
                 return;
             }
 
@@ -79,7 +98,10 @@ namespace ParkApp.components.Infrastructure
             {
                 var document = XDocument.Load(FilePath);
                 if (document.Root == null)
+                {
+                    EnableAvailableSections();
                     return;
+                }
 
                 foreach (var element in document.Root.Descendants("section"))
                 {
@@ -93,13 +115,31 @@ namespace ParkApp.components.Infrastructure
                     if (Enum.TryParse(name, true, out section))
                         _enabled.Add(section);
                 }
+
+                foreach (var element in document.Root.Descendants("path"))
+                {
+                    var name = (string)element.Attribute("name");
+                    var value = (string)element.Attribute("value");
+
+                    if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+                        continue;
+
+                    PathSetting setting;
+                    if (Enum.TryParse(name, true, out setting))
+                        _paths[setting] = value.Trim();
+                }
             }
             catch (Exception)
             {
                 // испорченный файл настроек не повод не запускаться: включаем готовые разделы
-                foreach (var section in SectionCatalog.All.Where(s => s.IsAvailable))
-                    _enabled.Add(section.Section);
+                EnableAvailableSections();
             }
+        }
+
+        private void EnableAvailableSections()
+        {
+            foreach (var section in SectionCatalog.All.Where(s => s.IsAvailable))
+                _enabled.Add(section.Section);
         }
     }
 }

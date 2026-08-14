@@ -21,7 +21,22 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelCarRepository : ICarRepository
     {
-        private const string SheetName = "Машины";
+        public const string SheetName = "Машины";
+
+        // имена столбцов вынесены сюда, потому что по ним же проверяется файл,
+        // который пользователь выбирает в настройках
+        public static readonly string[] VinNames = { "VIN", "ВИН" };
+        public static readonly string[] ModelNames = { "Марка автомобиля", "Марка", "Марка/модель", "Модель автомобиля" };
+        public static readonly string[] YearNames = { "Год выпуска", "Год" };
+        public static readonly string[] LocationNames = { "Местонахождение", "Место" };
+        public static readonly string[] AffiliationNames = { "Куда относится", "Принадлежность" };
+        public static readonly string[] OfficialNames = { "Должностное лицо", "Ответственный" };
+        public static readonly string[] VehicleTypeNames = { "Тип машины", "Тип" };
+        public static readonly string[] PlatePrefixes =
+        {
+            "Гос. рег. знак", "Гос. номер", "Госномер", "ГРЗ",
+            "Регистрационный знак", "Рег. знак", "Номер машины"
+        };
         private static readonly object Sync = new object();
 
         /// <summary>Войсковой знак: четыре цифры и две буквы, например 0123АВ.</summary>
@@ -72,15 +87,15 @@ namespace ParkApp.components.Infrastructure
 
             var sheet = XlsxReader.Read(path, SheetName);
 
-            var vinColumn = sheet.Column("VIN", "ВИН");
+            var vinColumn = sheet.Column(VinNames);
             if (vinColumn < 0)
                 throw new InvalidOperationException(
                     "В файле «Машины.xlsx» не найден столбец «VIN». " +
                     "VIN — ключ машины, без него документы не с чем связывать.");
 
-            var modelColumn = sheet.Column("Марка автомобиля", "Марка", "Марка/модель", "Модель автомобиля");
-            var yearColumn = sheet.Column("Год выпуска", "Год");
-            var locationColumn = sheet.Column("Местонахождение", "Место");
+            var modelColumn = sheet.Column(ModelNames);
+            var yearColumn = sheet.Column(YearNames);
+            var locationColumn = sheet.Column(LocationNames);
             var engineColumn = sheet.Column("Модель и № двигателя", "Модель двигателя");
             var powerColumn = sheet.Column("Мощность двигателя КВт/Л.С.", "Мощность двигателя", "Мощность");
             var chassisColumn = sheet.Column("№ шасси (рама)", "№ шасси", "Шасси", "Рама");
@@ -90,12 +105,12 @@ namespace ParkApp.components.Infrastructure
             var regCertificateColumn = sheet.Column("Свид. о регистрации", "Свидетельство о регистрации", "СРТС", "СТС");
             var policyColumn = sheet.Column("Страховой полис", "Полис", "ОСАГО");
             var diagnosticColumn = sheet.Column("Диагностическая карта", "Диагностическая");
-            var affiliationColumn = sheet.Column("Куда относится", "Принадлежность");
-            var officialColumn = sheet.Column("Должностное лицо", "Ответственный");
+            var affiliationColumn = sheet.Column(AffiliationNames);
+            var officialColumn = sheet.Column(OfficialNames);
             var staffColumn = sheet.Column("Штатная", "Штат");
             var confiscatedColumn = sheet.Column("Конфискат");
             var capacityColumn = sheet.Column("Вместимость");
-            var typeColumn = sheet.Column("Тип машины", "Тип");
+            var typeColumn = sheet.Column(VehicleTypeNames);
             var colorColumn = sheet.Column("Цвет");
             var volumeColumn = sheet.Column("Объем двигателя", "Объём двигателя");
             var maxMassColumn = sheet.Column("max m (масса)", "max m", "Максимальная масса");
@@ -110,10 +125,7 @@ namespace ParkApp.components.Infrastructure
             if (massColumn >= 0 && massColumn == maxMassColumn)
                 massColumn = -1;
 
-            var plateColumns = sheet
-                .ColumnsStartingWith("Гос. рег. знак", "Гос. номер", "Госномер", "ГРЗ",
-                                     "Регистрационный знак", "Рег. знак", "Номер машины")
-                .ToList();
+            var plateColumns = sheet.ColumnsStartingWith(PlatePrefixes).ToList();
 
             var cars = new List<Car>();
             var seenVins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

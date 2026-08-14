@@ -69,6 +69,14 @@ namespace ParkApp.components.ViewModel
             get { return !string.IsNullOrEmpty(_warning); }
         }
 
+        /// <summary>Перечитать таблицы — например, после смены путей в настройках.</summary>
+        public void Reload()
+        {
+            Error = null;
+            Warning = null;
+            Load();
+        }
+
         private async void Load()
         {
             try

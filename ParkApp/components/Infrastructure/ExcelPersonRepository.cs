@@ -14,7 +14,13 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelPersonRepository : IPersonRepository
     {
-        private const string SheetName = "Люди";
+        public const string SheetName = "Люди";
+
+        public static readonly string[] IdNames = { "№", "№ п/п", "Id", "Код" };
+        public static readonly string[] FullNameNames = { "ФИО", "Ф.И.О.", "Фамилия, имя, отчество" };
+        public static readonly string[] PositionNames = { "Должность" };
+        public static readonly string[] RankNames = { "Звание", "Воинское звание" };
+        public static readonly string[] PhoneNames = { "Телефон", "Номер телефона", "Тел." };
         private static readonly object Sync = new object();
 
         public Task<IReadOnlyList<Person>> GetAllAsync()
@@ -35,11 +41,11 @@ namespace ParkApp.components.Infrastructure
 
             var sheet = XlsxReader.Read(path, SheetName);
 
-            var idColumn = sheet.Column("№", "№ п/п", "Id", "Код");
-            var positionColumn = sheet.Column("Должность");
-            var rankColumn = sheet.Column("Звание", "Воинское звание");
-            var nameColumn = sheet.Column("ФИО", "Ф.И.О.", "Фамилия, имя, отчество");
-            var phoneColumn = sheet.Column("Телефон", "Номер телефона", "Тел.");
+            var idColumn = sheet.Column(IdNames);
+            var positionColumn = sheet.Column(PositionNames);
+            var rankColumn = sheet.Column(RankNames);
+            var nameColumn = sheet.Column(FullNameNames);
+            var phoneColumn = sheet.Column(PhoneNames);
 
             if (nameColumn < 0)
                 throw new InvalidOperationException(

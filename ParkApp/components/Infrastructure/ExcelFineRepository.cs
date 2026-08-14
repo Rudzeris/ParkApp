@@ -16,7 +16,14 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelFineRepository : IFineRepository
     {
-        private const string SheetName = "Штрафы";
+        public const string SheetName = "Штрафы";
+
+        public static readonly string[] NumberNames = { "№ постановления", "Номер постановления", "Постановление" };
+        public static readonly string[] ResolutionDateNames = { "Дата постановления" };
+        public static readonly string[] ViolationDateNames = { "Дата нарушения" };
+        public static readonly string[] VinNames = { "VIN машины", "VIN", "Машина", "ВИН" };
+        public static readonly string[] DriverNames = { "Водитель (№ из таблицы Люди)", "Водитель", "Водитель №" };
+        public static readonly string[] AmountNames = { "Сумма, руб.", "Сумма" };
         private static readonly object Sync = new object();
 
         private static readonly string[] Headers =
@@ -115,18 +122,18 @@ namespace ParkApp.components.Infrastructure
 
             var sheet = XlsxReader.Read(path, SheetName);
 
-            var numberColumn = sheet.Column("№ постановления", "Номер постановления", "Постановление");
+            var numberColumn = sheet.Column(NumberNames);
             if (numberColumn < 0)
                 throw new InvalidOperationException(
                     "В файле «Штрафы.xlsx» не найден столбец «№ постановления». " +
                     "Проверьте, что шапка таблицы на первой заполненной строке листа.");
 
-            var resolutionDateColumn = sheet.Column("Дата постановления");
-            var violationDateColumn = sheet.Column("Дата нарушения");
-            var vinColumn = sheet.Column("VIN машины", "VIN", "Машина", "ВИН");
-            var driverColumn = sheet.Column("Водитель (№ из таблицы Люди)", "Водитель", "Водитель №");
+            var resolutionDateColumn = sheet.Column(ResolutionDateNames);
+            var violationDateColumn = sheet.Column(ViolationDateNames);
+            var vinColumn = sheet.Column(VinNames);
+            var driverColumn = sheet.Column(DriverNames);
             var placeColumn = sheet.Column("Место нарушения", "Место");
-            var amountColumn = sheet.Column("Сумма, руб.", "Сумма");
+            var amountColumn = sheet.Column(AmountNames);
             var paidColumn = sheet.Column("Оплачен", "Оплата");
             var paidDateColumn = sheet.Column("Дата оплаты");
             var scanColumn = sheet.Column("Скан постановления", "Скан", "Файл");
