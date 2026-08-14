@@ -10,8 +10,8 @@ namespace ParkApp.components.Application
         /// <summary>VIN машины.</summary>
         public string CarVin { get; set; }
 
-        /// <summary>Часть ФИО водителя.</summary>
-        public string DriverName { get; set; }
+        /// <summary>Водитель: ссылка на Person.Id.</summary>
+        public int? DriverId { get; set; }
 
         /// <summary>Начало периода по дате нарушения (включительно).</summary>
         public DateTime? From { get; set; }
@@ -21,5 +21,8 @@ namespace ParkApp.components.Application
 
         /// <summary>Поиск по номеру постановления и месту нарушения.</summary>
         public string Text { get; set; }
+
+        /// <summary>Оплата: true — оплаченные, false — неоплаченные, null — все.</summary>
+        public bool? IsPaid { get; set; }
     }
 }

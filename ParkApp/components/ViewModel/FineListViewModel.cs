@@ -16,39 +16,55 @@ namespace ParkApp.components.ViewModel
     {
         private readonly FineService _fines;
         private readonly CarService _cars;
+        private readonly PersonService _people;
         private readonly IScanStorage _scans;
         private readonly IFineDialogService _dialogs;
         private readonly IFileDialogService _fileDialogs;
 
         private List<Car> _allCars = new List<Car>();
+        private List<Person> _allPeople = new List<Person>();
         private Dictionary<string, Car> _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
+        private IDictionary<int, Person> _peopleById = new Dictionary<int, Person>();
         private bool _isLoading;
         private bool _reloadRequested;
 
         private CarOption _selectedCarOption;
-        private string _driverFilter;
+        private PersonOption _selectedDriverOption;
         private DateTime? _dateFrom;
         private DateTime? _dateTo;
         private string _textFilter;
+        private PaymentFilterOption _selectedPaymentOption;
         private FineRowViewModel _selectedFine;
         private decimal _total;
+        private decimal _unpaidTotal;
         private string _status;
 
         public FineListViewModel(
             FineService fines,
             CarService cars,
+            PersonService people,
             IScanStorage scans,
             IFineDialogService dialogs,
             IFileDialogService fileDialogs)
         {
             _fines = fines;
             _cars = cars;
+            _people = people;
             _scans = scans;
             _dialogs = dialogs;
             _fileDialogs = fileDialogs;
 
             Fines = new ObservableCollection<FineRowViewModel>();
             CarOptions = new ObservableCollection<CarOption>();
+            DriverOptions = new ObservableCollection<PersonOption>();
+
+            PaymentOptions = new ObservableCollection<PaymentFilterOption>
+            {
+                new PaymentFilterOption("— все —", null),
+                new PaymentFilterOption("не оплаченные", false),
+                new PaymentFilterOption("оплаченные", true)
+            };
+            _selectedPaymentOption = PaymentOptions[0];
 
             AddCommand = new RelayCommand(o => Add());
             EditCommand = new RelayCommand(o => Edit(), o => SelectedFine != null);
@@ -60,6 +76,8 @@ namespace ParkApp.components.ViewModel
 
         public ObservableCollection<FineRowViewModel> Fines { get; private set; }
         public ObservableCollection<CarOption> CarOptions { get; private set; }
+        public ObservableCollection<PersonOption> DriverOptions { get; private set; }
+        public ObservableCollection<PaymentFilterOption> PaymentOptions { get; private set; }
 
         public ICommand AddCommand { get; private set; }
         public ICommand EditCommand { get; private set; }
@@ -74,10 +92,16 @@ namespace ParkApp.components.ViewModel
             set { if (SetProperty(ref _selectedCarOption, value)) Reload(); }
         }
 
-        public string DriverFilter
+        public PersonOption SelectedDriverOption
         {
-            get { return _driverFilter; }
-            set { if (SetProperty(ref _driverFilter, value)) Reload(); }
+            get { return _selectedDriverOption; }
+            set { if (SetProperty(ref _selectedDriverOption, value)) Reload(); }
+        }
+
+        public PaymentFilterOption SelectedPaymentOption
+        {
+            get { return _selectedPaymentOption; }
+            set { if (SetProperty(ref _selectedPaymentOption, value)) Reload(); }
         }
 
         public DateTime? DateFrom
@@ -111,6 +135,13 @@ namespace ParkApp.components.ViewModel
             private set { SetProperty(ref _total, value); }
         }
 
+        /// <summary>Сколько из отобранного ещё не оплачено.</summary>
+        public decimal UnpaidTotal
+        {
+            get { return _unpaidTotal; }
+            private set { SetProperty(ref _unpaidTotal, value); }
+        }
+
         public string Status
         {
             get { return _status; }
@@ -123,7 +154,7 @@ namespace ParkApp.components.ViewModel
             try
             {
                 var cars = await _cars.GetAllAsync();
-                _allCars = cars.OrderBy(c => c.Model).ToList();
+                _allCars = cars.OrderBy(CarOption.ModelText).ToList();
 
                 _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
                 foreach (var car in _allCars)
@@ -139,6 +170,18 @@ namespace ParkApp.components.ViewModel
 
                 _selectedCarOption = CarOptions[0];
                 OnPropertyChanged("SelectedCarOption");
+
+                var people = await _people.GetAllAsync();
+                _allPeople = people.ToList();
+                _peopleById = await _people.GetByIdAsync();
+
+                DriverOptions.Clear();
+                DriverOptions.Add(new PersonOption(null, "— все водители —"));
+                foreach (var person in _allPeople)
+                    DriverOptions.Add(PersonOption.ForPerson(person));
+
+                _selectedDriverOption = DriverOptions[0];
+                OnPropertyChanged("SelectedDriverOption");
 
                 await ReloadAsync();
             }
@@ -186,10 +229,11 @@ namespace ParkApp.components.ViewModel
                 var filter = new FineFilter
                 {
                     CarVin = _selectedCarOption != null ? _selectedCarOption.Vin : null,
-                    DriverName = DriverFilter,
+                    DriverId = _selectedDriverOption != null ? _selectedDriverOption.Id : null,
                     From = DateFrom,
                     To = DateTo,
-                    Text = TextFilter
+                    Text = TextFilter,
+                    IsPaid = _selectedPaymentOption != null ? _selectedPaymentOption.IsPaid : null
                 };
 
                 var found = await _fines.FindAsync(filter);
@@ -201,13 +245,19 @@ namespace ParkApp.components.ViewModel
                 {
                     Car car;
                     _carsByVin.TryGetValue((fine.CarVin ?? string.Empty).Trim(), out car);
-                    Fines.Add(new FineRowViewModel(fine, car, _scans.Exists(fine.ScanPath)));
+
+                    Person driver = null;
+                    if (fine.DriverId.HasValue)
+                        _peopleById.TryGetValue(fine.DriverId.Value, out driver);
+
+                    Fines.Add(new FineRowViewModel(fine, car, driver, _scans.Exists(fine.ScanPath)));
                 }
 
                 if (selectedNumber != null)
                     SelectedFine = Fines.FirstOrDefault(r => r.ResolutionNumber == selectedNumber);
 
                 Total = _fines.GetTotal(found);
+                UnpaidTotal = _fines.GetUnpaidTotal(found);
                 Status = string.Format("Записей: {0}", found.Count);
             }
             catch (Exception ex)
@@ -219,13 +269,15 @@ namespace ParkApp.components.ViewModel
         private void ResetFilter()
         {
             _selectedCarOption = CarOptions.Count > 0 ? CarOptions[0] : null;
-            _driverFilter = null;
+            _selectedDriverOption = DriverOptions.Count > 0 ? DriverOptions[0] : null;
+            _selectedPaymentOption = PaymentOptions.Count > 0 ? PaymentOptions[0] : null;
             _dateFrom = null;
             _dateTo = null;
             _textFilter = null;
 
             OnPropertyChanged("SelectedCarOption");
-            OnPropertyChanged("DriverFilter");
+            OnPropertyChanged("SelectedDriverOption");
+            OnPropertyChanged("SelectedPaymentOption");
             OnPropertyChanged("DateFrom");
             OnPropertyChanged("DateTo");
             OnPropertyChanged("TextFilter");
@@ -259,7 +311,7 @@ namespace ParkApp.components.ViewModel
 
         private void ShowEditor(Fine fine, bool isNew)
         {
-            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, fine, isNew);
+            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, _allPeople, fine, isNew);
             if (_dialogs.ShowEditor(editor))
                 Reload();
         }
@@ -319,8 +371,10 @@ namespace ParkApp.components.ViewModel
                 ResolutionDate = source.ResolutionDate,
                 ViolationDate = source.ViolationDate,
                 ViolationPlace = source.ViolationPlace,
+                IsPaid = source.IsPaid,
+                PaidDate = source.PaidDate,
                 CarVin = source.CarVin,
-                DriverName = source.DriverName,
+                DriverId = source.DriverId,
                 Amount = source.Amount,
                 ScanPath = source.ScanPath
             };

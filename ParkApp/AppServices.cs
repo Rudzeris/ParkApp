@@ -13,33 +13,58 @@ namespace ParkApp
     public static class AppServices
     {
         public static CarService Cars { get; private set; }
+        public static PersonService People { get; private set; }
+        public static LookupService Lookups { get; private set; }
         public static FineService Fines { get; private set; }
         public static IScanStorage Scans { get; private set; }
         public static IFileDialogService FileDialogs { get; private set; }
         public static IFineDialogService FineDialogs { get; private set; }
+        public static IMainDialogService MainDialogs { get; private set; }
+        public static IAppSettings Settings { get; private set; }
 
         public static void Initialize()
         {
             // хранилище выбирается здесь и только здесь: замена Excel на БД —
-            // это две строки ниже, остальные слои не меняются
+            // это несколько строк ниже, остальные слои не меняются
             ICarRepository carRepository = new ExcelCarRepository();
+            IPersonRepository personRepository = new ExcelPersonRepository();
+            ILookupRepository lookupRepository = new ExcelLookupRepository();
             IFineRepository fineRepository = new ExcelFineRepository();
 
             Cars = new CarService(carRepository);
+            People = new PersonService(personRepository);
+            Lookups = new LookupService(lookupRepository);
             Fines = new FineService(fineRepository);
+
             Scans = new FileScanStorage();
             FileDialogs = new WpfFileDialogService();
             FineDialogs = new WpfFineDialogService();
+            Settings = new XmlAppSettings();
+            MainDialogs = new WpfMainDialogService(CreateFineListViewModel);
+        }
+
+        public static MainViewModel CreateMainViewModel()
+        {
+            return new MainViewModel(
+                CreateCarListViewModel(),
+                Settings,
+                MainDialogs,
+                CreateSettingsViewModel);
         }
 
         public static CarListViewModel CreateCarListViewModel()
         {
-            return new CarListViewModel(Cars);
+            return new CarListViewModel(Cars, People, Lookups);
         }
 
         public static FineListViewModel CreateFineListViewModel()
         {
-            return new FineListViewModel(Fines, Cars, Scans, FineDialogs, FileDialogs);
+            return new FineListViewModel(Fines, Cars, People, Scans, FineDialogs, FileDialogs);
+        }
+
+        public static SettingsViewModel CreateSettingsViewModel()
+        {
+            return new SettingsViewModel(Settings);
         }
     }
 }

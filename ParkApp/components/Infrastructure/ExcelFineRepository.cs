@@ -25,9 +25,11 @@ namespace ParkApp.components.Infrastructure
             "Дата постановления",
             "Дата нарушения",
             "VIN машины",
-            "Водитель",
+            "Водитель (№ из таблицы Люди)",
             "Место нарушения",
             "Сумма, руб.",
+            "Оплачен",
+            "Дата оплаты",
             "Скан постановления"
         };
 
@@ -122,9 +124,11 @@ namespace ParkApp.components.Infrastructure
             var resolutionDateColumn = sheet.Column("Дата постановления");
             var violationDateColumn = sheet.Column("Дата нарушения");
             var vinColumn = sheet.Column("VIN машины", "VIN", "Машина", "ВИН");
-            var driverColumn = sheet.Column("Водитель");
+            var driverColumn = sheet.Column("Водитель (№ из таблицы Люди)", "Водитель", "Водитель №");
             var placeColumn = sheet.Column("Место нарушения", "Место");
             var amountColumn = sheet.Column("Сумма, руб.", "Сумма");
+            var paidColumn = sheet.Column("Оплачен", "Оплата");
+            var paidDateColumn = sheet.Column("Дата оплаты");
             var scanColumn = sheet.Column("Скан постановления", "Скан", "Файл");
 
             var fines = new List<Fine>();
@@ -143,9 +147,11 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = SheetTable.GetDate(row, resolutionDateColumn) ?? default(DateTime),
                     ViolationDate = SheetTable.GetDate(row, violationDateColumn) ?? default(DateTime),
                     CarVin = SheetTable.GetString(row, vinColumn),
-                    DriverName = SheetTable.GetString(row, driverColumn),
+                    DriverId = SheetTable.GetInt(row, driverColumn),
                     ViolationPlace = SheetTable.GetString(row, placeColumn),
                     Amount = SheetTable.GetDecimal(row, amountColumn) ?? 0m,
+                    IsPaid = ParsePaid(row, paidColumn, paidDateColumn),
+                    PaidDate = SheetTable.GetDate(row, paidDateColumn),
                     ScanPath = SheetTable.GetString(row, scanColumn)
                 });
             }
@@ -164,14 +170,29 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Date(f.ResolutionDate),
                     XlsxCell.Date(f.ViolationDate),
                     XlsxCell.Text(f.CarVin),
-                    XlsxCell.Text(f.DriverName),
+                    XlsxCell.Number(f.DriverId),
                     XlsxCell.Text(f.ViolationPlace),
                     XlsxCell.Money(f.Amount),
+                    XlsxCell.Text(f.IsPaid ? "да" : "нет"),
+                    XlsxCell.Date(f.PaidDate),
                     XlsxCell.Text(f.ScanPath)
                 })
                 .ToList();
 
             XlsxWriter.Write(AppPaths.FinesFile, SheetName, Headers, rows);
+        }
+
+        /// <summary>
+        /// Оплачен ли штраф. Заполненная дата оплаты сама по себе означает «да»,
+        /// даже если отметку в столбце «Оплачен» поставить забыли.
+        /// </summary>
+        private static bool ParsePaid(string[] row, int paidColumn, int paidDateColumn)
+        {
+            var flag = SheetTable.GetYesNo(row, paidColumn);
+            if (flag.HasValue)
+                return flag.Value;
+
+            return SheetTable.GetDate(row, paidDateColumn).HasValue;
         }
 
         private static bool SameNumber(string left, string right)
@@ -195,9 +216,11 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = today.AddDays(-20),
                     ViolationDate = today.AddDays(-25),
                     ViolationPlace = "г. Казань, пр. Победы, 12",
-                    CarVin = "VIN1",
-                    DriverName = "Иванов И.И.",
-                    Amount = 500m
+                    CarVin = "XTT316300E0012345",
+                    DriverId = 2,
+                    Amount = 500m,
+                    IsPaid = true,
+                    PaidDate = today.AddDays(-18)
                 },
                 new Fine
                 {
@@ -205,8 +228,8 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = today.AddDays(-8),
                     ViolationDate = today.AddDays(-10),
                     ViolationPlace = "трасса М-7, 812 км",
-                    CarVin = "VIN2",
-                    DriverName = "Петров П.П.",
+                    CarVin = "X1F53500J0000123",
+                    DriverId = 3,
                     Amount = 1500m
                 },
                 new Fine
@@ -214,7 +237,7 @@ namespace ParkApp.components.Infrastructure
                     ResolutionNumber = "18810516250409876543",
                     ResolutionDate = today.AddDays(-3),
                     ViolationDate = today.AddDays(-3),
-                    CarVin = "VIN2",
+                    CarVin = "X1F53500J0000123",
                     Amount = 800m
                 }
             };

@@ -14,7 +14,7 @@ namespace ParkApp.components.Infrastructure
                 CheckFileExists = true,
 
                 // без этого выбор файла меняет текущий каталог процесса,
-                // а cars.json открывается по относительному пути
+                // что ломает относительные пути
                 RestoreDirectory = true
             };
 

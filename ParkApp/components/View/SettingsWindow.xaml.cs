@@ -1,13 +1,13 @@
-﻿using System.Windows;
+using System.Windows;
 using ParkApp.components.ViewModel;
 
 namespace ParkApp.components.View
 {
-    public partial class FineEditWindow : Window
+    public partial class SettingsWindow : Window
     {
         private bool _closing;
 
-        public FineEditWindow(FineEditViewModel viewModel)
+        public SettingsWindow(SettingsViewModel viewModel)
         {
             InitializeComponent();
             DataContext = viewModel;
@@ -17,7 +17,6 @@ namespace ParkApp.components.View
 
         private void OnRequestClose(object sender, bool saved)
         {
-            // DialogResult закрывает окно, повторная установка после закрытия бросает исключение
             if (_closing)
                 return;
 

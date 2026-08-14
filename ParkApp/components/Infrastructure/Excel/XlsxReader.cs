@@ -25,6 +25,23 @@ namespace ParkApp.components.Infrastructure.Excel
         /// </summary>
         public static SheetTable Read(string path, string preferredSheetName = null)
         {
+            return ReadCore(path, preferredSheetName, false);
+        }
+
+        /// <summary>
+        /// Читает лист строго по имени; null, если такого листа в книге нет.
+        /// Нужно для справочных листов: молча подсунуть вместо них первый лист нельзя.
+        /// </summary>
+        public static SheetTable ReadOrNull(string path, string sheetName)
+        {
+            if (!File.Exists(path))
+                return null;
+
+            return ReadCore(path, sheetName, true);
+        }
+
+        private static SheetTable ReadCore(string path, string preferredSheetName, bool requireSheet)
+        {
             if (!File.Exists(path))
                 throw new FileNotFoundException(string.Format("Файл «{0}» не найден.", path), path);
 
@@ -35,7 +52,10 @@ namespace ParkApp.components.Infrastructure.Excel
                 using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                 {
                     var sharedStrings = ReadSharedStrings(archive);
-                    var sheetEntryName = FindSheetEntry(archive, preferredSheetName);
+                    var sheetEntryName = FindSheetEntry(archive, preferredSheetName, requireSheet);
+
+                    if (sheetEntryName == null)
+                        return null;
 
                     var entry = archive.GetEntry(sheetEntryName);
                     if (entry == null)
@@ -156,12 +176,18 @@ namespace ParkApp.components.Infrastructure.Excel
             return result;
         }
 
-        /// <summary>Путь к нужному листу внутри архива через workbook.xml и его связи.</summary>
-        private static string FindSheetEntry(ZipArchive archive, string preferredSheetName)
+        /// <summary>
+        /// Путь к нужному листу внутри архива через workbook.xml и его связи.
+        /// При requireSheet возвращает null, если листа с таким именем нет,
+        /// иначе откатывается на первый лист книги.
+        /// </summary>
+        private static string FindSheetEntry(ZipArchive archive, string preferredSheetName, bool requireSheet)
         {
+            var fallback = requireSheet ? null : "xl/worksheets/sheet1.xml";
+
             var workbookEntry = archive.GetEntry("xl/workbook.xml");
             if (workbookEntry == null)
-                return "xl/worksheets/sheet1.xml";
+                return fallback;
 
             string firstRelationId = null;
             string matchedRelationId = null;
@@ -189,19 +215,22 @@ namespace ParkApp.components.Infrastructure.Excel
                 }
             }
 
+            if (requireSheet && matchedRelationId == null)
+                return null;
+
             var targetRelationId = matchedRelationId ?? firstRelationId;
             if (targetRelationId == null)
-                return "xl/worksheets/sheet1.xml";
+                return fallback;
 
             var relationsEntry = archive.GetEntry("xl/_rels/workbook.xml.rels");
             if (relationsEntry == null)
-                return "xl/worksheets/sheet1.xml";
+                return fallback;
 
             using (var stream = relationsEntry.Open())
             {
                 var document = XDocument.Load(stream);
                 if (document.Root == null)
-                    return "xl/worksheets/sheet1.xml";
+                    return fallback;
 
                 foreach (var relationship in document.Root.Elements(PackageRelationships + "Relationship"))
                 {
@@ -216,7 +245,7 @@ namespace ParkApp.components.Infrastructure.Excel
                 }
             }
 
-            return "xl/worksheets/sheet1.xml";
+            return fallback;
         }
 
         private static string NormalizeTarget(string target)

@@ -28,8 +28,20 @@ namespace ParkApp.components.Infrastructure.Excel
         /// </summary>
         public static void Write(string path, string sheetName, IList<string> headers, IEnumerable<IList<XlsxCell>> rows)
         {
+            Write(path, new List<XlsxSheet> { new XlsxSheet(sheetName, headers, rows) });
+        }
+
+        /// <summary>
+        /// Перезаписывает книгу целиком. Несколько листов нужны там, где рядом с данными
+        /// лежат справочные списки — «Куда относится», «Тип машины».
+        /// </summary>
+        public static void Write(string path, IList<XlsxSheet> sheets)
+        {
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentException("Не указан путь к файлу.", "path");
+
+            if (sheets == null || sheets.Count == 0)
+                throw new ArgumentException("Нужен хотя бы один лист.", "sheets");
 
             AppPaths.EnsureFolderFor(path);
 
@@ -41,12 +53,18 @@ namespace ParkApp.components.Infrastructure.Excel
                 using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
                 {
-                    WriteEntry(archive, "[Content_Types].xml", ContentTypes());
+                    WriteEntry(archive, "[Content_Types].xml", ContentTypes(sheets.Count));
                     WriteEntry(archive, "_rels/.rels", RootRelationships());
-                    WriteEntry(archive, "xl/workbook.xml", Workbook(sheetName));
-                    WriteEntry(archive, "xl/_rels/workbook.xml.rels", WorkbookRelationships());
+                    WriteEntry(archive, "xl/workbook.xml", Workbook(sheets));
+                    WriteEntry(archive, "xl/_rels/workbook.xml.rels", WorkbookRelationships(sheets.Count));
                     WriteEntry(archive, "xl/styles.xml", Styles());
-                    WriteEntry(archive, "xl/worksheets/sheet1.xml", Sheet(headers, rows));
+
+                    for (var i = 0; i < sheets.Count; i++)
+                    {
+                        WriteEntry(archive,
+                            string.Format(CultureInfo.InvariantCulture, "xl/worksheets/sheet{0}.xml", i + 1),
+                            Sheet(sheets[i].Headers, sheets[i].Rows));
+                    }
                 }
 
                 if (File.Exists(path))
@@ -88,17 +106,24 @@ namespace ParkApp.components.Infrastructure.Excel
                 writer.Write(content);
         }
 
-        private static string ContentTypes()
+        private static string ContentTypes(int sheetCount)
         {
-            return
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-                "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">" +
-                "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>" +
-                "<Default Extension=\"xml\" ContentType=\"application/xml\"/>" +
-                "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>" +
-                "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>" +
-                "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>" +
-                "</Types>";
+            var builder = new StringBuilder();
+            builder.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+            builder.Append("<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">");
+            builder.Append("<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>");
+            builder.Append("<Default Extension=\"xml\" ContentType=\"application/xml\"/>");
+            builder.Append("<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>");
+
+            for (var i = 1; i <= sheetCount; i++)
+            {
+                builder.Append("<Override PartName=\"/xl/worksheets/sheet").Append(i)
+                       .Append(".xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
+            }
+
+            builder.Append("<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>");
+            builder.Append("</Types>");
+            return builder.ToString();
         }
 
         private static string RootRelationships()
@@ -110,23 +135,43 @@ namespace ParkApp.components.Infrastructure.Excel
                 "</Relationships>";
         }
 
-        private static string Workbook(string sheetName)
+        private static string Workbook(IList<XlsxSheet> sheets)
         {
-            return
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-                "<workbook xmlns=\"" + MainNamespace + "\" xmlns:r=\"" + RelationshipNamespace + "\">" +
-                "<sheets><sheet name=\"" + Escape(SafeSheetName(sheetName)) + "\" sheetId=\"1\" r:id=\"rId1\"/></sheets>" +
-                "</workbook>";
+            var builder = new StringBuilder();
+            builder.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+            builder.Append("<workbook xmlns=\"").Append(MainNamespace)
+                   .Append("\" xmlns:r=\"").Append(RelationshipNamespace).Append("\"><sheets>");
+
+            for (var i = 0; i < sheets.Count; i++)
+            {
+                builder.Append("<sheet name=\"").Append(Escape(SafeSheetName(sheets[i].Name)))
+                       .Append("\" sheetId=\"").Append(i + 1)
+                       .Append("\" r:id=\"rId").Append(i + 1).Append("\"/>");
+            }
+
+            builder.Append("</sheets></workbook>");
+            return builder.ToString();
         }
 
-        private static string WorkbookRelationships()
+        private static string WorkbookRelationships(int sheetCount)
         {
-            return
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
-                "<Relationship Id=\"rId1\" Type=\"" + RelationshipNamespace + "/worksheet\" Target=\"worksheets/sheet1.xml\"/>" +
-                "<Relationship Id=\"rId2\" Type=\"" + RelationshipNamespace + "/styles\" Target=\"styles.xml\"/>" +
-                "</Relationships>";
+            var builder = new StringBuilder();
+            builder.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+            builder.Append("<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">");
+
+            for (var i = 1; i <= sheetCount; i++)
+            {
+                builder.Append("<Relationship Id=\"rId").Append(i)
+                       .Append("\" Type=\"").Append(RelationshipNamespace)
+                       .Append("/worksheet\" Target=\"worksheets/sheet").Append(i).Append(".xml\"/>");
+            }
+
+            builder.Append("<Relationship Id=\"rId").Append(sheetCount + 1)
+                   .Append("\" Type=\"").Append(RelationshipNamespace)
+                   .Append("/styles\" Target=\"styles.xml\"/>");
+
+            builder.Append("</Relationships>");
+            return builder.ToString();
         }
 
         /// <summary>Стили: 0 — обычный, 1 — дата (ДД.ММ.ГГГГ), 2 — деньги, 3 — жирная шапка.</summary>

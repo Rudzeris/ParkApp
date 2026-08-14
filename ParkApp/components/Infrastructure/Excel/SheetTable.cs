@@ -62,16 +62,37 @@ namespace ParkApp.components.Infrastructure.Excel
 
         /// <summary>
         /// Номер столбца по любому из названий-синонимов. -1, если ни одного нет.
+        ///
+        /// Сначала ищется точное совпадение по всем синонимам, и только потом —
+        /// совпадение по началу названия. Порядок важен: в рабочих таблицах шапка
+        /// часто содержит пояснение в скобках («Местонахождение(ППД и ВО - enum)»),
+        /// но при этом рядом может стоять похожий столбец («Модель и № двигателя»),
+        /// который не должен перехватить поиск раньше точного совпадения.
         /// </summary>
         public int Column(params string[] names)
         {
             foreach (var name in names)
             {
                 var wanted = Normalize(name);
+                if (wanted.Length == 0)
+                    continue;
 
                 for (var i = 0; i < _headers.Count; i++)
                 {
                     if (Normalize(_headers[i]) == wanted)
+                        return i;
+                }
+            }
+
+            foreach (var name in names)
+            {
+                var wanted = Normalize(name);
+                if (wanted.Length == 0)
+                    continue;
+
+                for (var i = 0; i < _headers.Count; i++)
+                {
+                    if (Normalize(_headers[i]).StartsWith(wanted, StringComparison.Ordinal))
                         return i;
                 }
             }
@@ -148,6 +169,29 @@ namespace ParkApp.components.Infrastructure.Excel
             return decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out result)
                 ? result
                 : (decimal?)null;
+        }
+
+        /// <summary>
+        /// «Да/нет» из ячейки. Понимает «да», «нет», «+», «-», «1», «0», «истина», «ложь».
+        /// null — ячейка пустая или значение непонятное.
+        /// </summary>
+        public static bool? GetYesNo(string[] row, int column)
+        {
+            var value = GetString(row, column);
+            if (value == null)
+                return null;
+
+            var normalized = value.Trim().ToLowerInvariant();
+
+            if (normalized == "да" || normalized == "+" || normalized == "1"
+                || normalized == "истина" || normalized == "yes" || normalized == "true")
+                return true;
+
+            if (normalized == "нет" || normalized == "-" || normalized == "0"
+                || normalized == "ложь" || normalized == "no" || normalized == "false")
+                return false;
+
+            return null;
         }
 
         /// <summary>Целое из ячейки: «2010 г.» → 2010, «12 500 км» → 12500.</summary>

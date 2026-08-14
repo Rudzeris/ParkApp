@@ -30,8 +30,8 @@ namespace ParkApp.components.Application
                 if (!string.IsNullOrWhiteSpace(filter.CarVin))
                     query = query.Where(f => string.Equals(f.CarVin, filter.CarVin, StringComparison.OrdinalIgnoreCase));
 
-                if (!string.IsNullOrWhiteSpace(filter.DriverName))
-                    query = query.Where(f => Contains(f.DriverName, filter.DriverName));
+                if (filter.DriverId.HasValue)
+                    query = query.Where(f => f.DriverId == filter.DriverId.Value);
 
                 if (filter.From.HasValue)
                 {
@@ -44,6 +44,9 @@ namespace ParkApp.components.Application
                     var to = filter.To.Value.Date;
                     query = query.Where(f => f.ViolationDate.Date <= to);
                 }
+
+                if (filter.IsPaid.HasValue)
+                    query = query.Where(f => f.IsPaid == filter.IsPaid.Value);
 
                 if (!string.IsNullOrWhiteSpace(filter.Text))
                     query = query.Where(f => Contains(f.ResolutionNumber, filter.Text)
@@ -61,19 +64,10 @@ namespace ParkApp.components.Application
         /// <summary>Итоговая сумма по набору штрафов.</summary>
         public decimal GetTotal(IEnumerable<Fine> fines) => fines == null ? 0m : fines.Sum(f => f.Amount);
 
-        /// <summary>
-        /// Водители, которые уже встречались в штрафах — для подсказки при вводе.
-        /// Пока водитель хранится строкой, это единственная защита от разнобоя в ФИО.
-        /// </summary>
-        public async Task<IReadOnlyList<string>> GetKnownDriversAsync()
+        /// <summary>Сколько из этих штрафов ещё не оплачено — главный вопрос к реестру.</summary>
+        public decimal GetUnpaidTotal(IEnumerable<Fine> fines)
         {
-            var all = await _repo.GetAllAsync();
-            return all
-                .Select(f => (f.DriverName ?? string.Empty).Trim())
-                .Where(name => name.Length > 0)
-                .Distinct(StringComparer.CurrentCultureIgnoreCase)
-                .OrderBy(name => name)
-                .ToList();
+            return fines == null ? 0m : fines.Where(f => !f.IsPaid).Sum(f => f.Amount);
         }
 
         /// <summary>
@@ -125,6 +119,15 @@ namespace ParkApp.components.Application
             if (fine.Amount <= 0m)
                 errors.Add("Сумма штрафа должна быть больше нуля.");
 
+            if (fine.PaidDate.HasValue)
+            {
+                if (fine.PaidDate.Value.Date > today)
+                    errors.Add("Дата оплаты не может быть в будущем.");
+
+                if (fine.ResolutionDate != empty && fine.PaidDate.Value.Date < fine.ResolutionDate.Date)
+                    errors.Add("Дата оплаты не может быть раньше даты постановления.");
+            }
+
             return errors;
         }
 
@@ -155,10 +158,17 @@ namespace ParkApp.components.Application
         {
             fine.ResolutionNumber = (fine.ResolutionNumber ?? string.Empty).Trim();
             fine.ViolationPlace = Trim(fine.ViolationPlace);
-            fine.DriverName = Trim(fine.DriverName);
             fine.CarVin = (fine.CarVin ?? string.Empty).Trim();
             fine.ResolutionDate = fine.ResolutionDate.Date;
             fine.ViolationDate = fine.ViolationDate.Date;
+
+            if (fine.PaidDate.HasValue)
+            {
+                fine.PaidDate = fine.PaidDate.Value.Date;
+
+                // дата оплаты сама по себе означает, что штраф оплачен
+                fine.IsPaid = true;
+            }
         }
 
         private static string Trim(string value)

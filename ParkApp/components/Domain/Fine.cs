@@ -23,11 +23,23 @@ namespace ParkApp.components.Domain
         /// <summary>VIN машины. Ссылка на <see cref="Car.Vin"/>.</summary>
         public string CarVin { get; set; }
 
-        /// <summary>ФИО водителя. Может быть пустым: постановление приходит на владельца.</summary>
-        public string DriverName { get; set; }
+        /// <summary>
+        /// Водитель — ссылка на <see cref="Person.Id"/>. Может быть пустой:
+        /// постановление приходит на владельца, и виновник не всегда установлен.
+        /// </summary>
+        public int? DriverId { get; set; }
 
         /// <summary>Сумма штрафа, руб.</summary>
         public decimal Amount { get; set; }
+
+        /// <summary>Штраф оплачен.</summary>
+        public bool IsPaid { get; set; }
+
+        /// <summary>
+        /// Дата оплаты. Может быть пустой и у оплаченного штрафа:
+        /// отметку иногда ставят задним числом, не помня дня.
+        /// </summary>
+        public DateTime? PaidDate { get; set; }
 
         /// <summary>Относительный путь к скану постановления внутри каталога данных.</summary>
         public string ScanPath { get; set; }
