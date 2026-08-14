@@ -5,17 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ParkApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
+        Title="Автопарк" Height="420" Width="700">
+    <DockPanel>
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar>
+                <Button Content="Штрафы" Click="OnFinesClick" Padding="12,2" />
+            </ToolBar>
+        </ToolBarTray>
+
         <ListView ItemsSource="{Binding Cars}">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Модель" DisplayMemberBinding="{Binding Model}" />
-                    <GridViewColumn Header="VIN" DisplayMemberBinding="{Binding Vin}" />
-                    <GridViewColumn Header="Год" DisplayMemberBinding="{Binding Year}" />
-                    <GridViewColumn Header="Местонахождение" DisplayMemberBinding="{Binding Location}" />
+                    <GridViewColumn Header="Модель" Width="140" DisplayMemberBinding="{Binding Model}" />
+                    <GridViewColumn Header="VIN" Width="160" DisplayMemberBinding="{Binding Vin}" />
+                    <GridViewColumn Header="Год" Width="60" DisplayMemberBinding="{Binding Year}" />
+                    <GridViewColumn Header="Местонахождение" Width="150" DisplayMemberBinding="{Binding Location}" />
                 </GridView>
             </ListView.View>
         </ListView>
-    </Grid>
+    </DockPanel>
 </Window>

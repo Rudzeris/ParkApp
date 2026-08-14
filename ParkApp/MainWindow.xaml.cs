@@ -1,6 +1,5 @@
-using System.IO;
 using System.Windows;
-using Xceed.Words.NET;
+using ParkApp.components.View;
 
 namespace ParkApp
 {
@@ -9,6 +8,16 @@ namespace ParkApp
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void OnFinesClick(object sender, RoutedEventArgs e)
+        {
+            var window = new FinesWindow(AppServices.CreateFineListViewModel())
+            {
+                Owner = this
+            };
+
+            window.ShowDialog();
         }
     }
 }
