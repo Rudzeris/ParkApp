@@ -7,12 +7,14 @@ namespace ParkApp.components.ViewModel
     {
         private string _value;
         private string _note;
+        private string _sheetName;
 
-        public PathSettingViewModel(PathSettingDescription description, string value, string defaultPath)
+        public PathSettingViewModel(PathSettingDescription description, string value, string defaultPath, string sheetName)
         {
             Description = description;
             DefaultPath = defaultPath;
             _value = value ?? string.Empty;
+            _sheetName = sheetName;
         }
 
         public PathSettingDescription Description { get; private set; }
@@ -33,6 +35,19 @@ namespace ParkApp.components.ViewModel
         public bool IsFolder
         {
             get { return Description.IsFolder; }
+        }
+
+        /// <summary>У файлов есть лист, у папок — нет.</summary>
+        public bool HasSheet
+        {
+            get { return Description.Table.HasValue; }
+        }
+
+        /// <summary>Какой лист приложение ищет в этом файле.</summary>
+        public string SheetName
+        {
+            get { return _sheetName; }
+            set { SetProperty(ref _sheetName, value); }
         }
 
         /// <summary>Заданный путь. Пусто — используется значение по умолчанию.</summary>

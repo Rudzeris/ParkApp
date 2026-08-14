@@ -22,6 +22,7 @@ namespace ParkApp
         public static IMainDialogService MainDialogs { get; private set; }
         public static IMessageService Messages { get; private set; }
         public static ITableFileValidator TableFiles { get; private set; }
+        public static ISheetPicker SheetPicker { get; private set; }
         public static IAppSettings Settings { get; private set; }
 
         public static void Initialize()
@@ -29,6 +30,7 @@ namespace ParkApp
             // настройки читаются первыми: в них лежат пути, по которым работают репозитории
             Settings = new XmlAppSettings();
             AppPaths.UseSettings(Settings);
+            AppSheets.UseSettings(Settings);
 
             // хранилище выбирается здесь и только здесь: замена Excel на БД —
             // это несколько строк ниже, остальные слои не меняются
@@ -47,6 +49,7 @@ namespace ParkApp
             FineDialogs = new WpfFineDialogService();
             Messages = new WpfMessageService();
             TableFiles = new ExcelTableValidator();
+            SheetPicker = new WpfSheetPicker();
             MainDialogs = new WpfMainDialogService(CreateFineListViewModel);
         }
 
@@ -71,7 +74,8 @@ namespace ParkApp
 
         public static SettingsViewModel CreateSettingsViewModel()
         {
-            return new SettingsViewModel(Settings, FileDialogs, TableFiles, Messages, AppPaths.DefaultPath);
+            return new SettingsViewModel(
+                Settings, FileDialogs, TableFiles, Messages, SheetPicker, AppPaths.DefaultPath);
         }
     }
 }

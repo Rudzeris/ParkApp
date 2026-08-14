@@ -13,11 +13,14 @@ namespace ParkApp.components.Application
     /// <summary>Результат проверки выбранного файла.</summary>
     public class TableFileCheck
     {
-        public TableFileCheck(bool isValid, string problem, IReadOnlyList<string> missingColumns)
+        public TableFileCheck(bool isValid, string problem, IReadOnlyList<string> missingColumns,
+            bool sheetMissing, IReadOnlyList<string> availableSheets)
         {
             IsValid = isValid;
             Problem = problem;
             MissingColumns = missingColumns ?? new List<string>();
+            SheetMissing = sheetMissing;
+            AvailableSheets = availableSheets ?? new List<string>();
         }
 
         /// <summary>Файл пригоден: лист и обязательные столбцы на месте.</summary>
@@ -31,6 +34,15 @@ namespace ParkApp.components.Application
         /// эти данные просто не будут читаться.
         /// </summary>
         public IReadOnlyList<string> MissingColumns { get; private set; }
+
+        /// <summary>
+        /// Файл открылся, но листа с ожидаемым именем в нём нет.
+        /// Это поправимо: лист можно выбрать из <see cref="AvailableSheets"/>.
+        /// </summary>
+        public bool SheetMissing { get; private set; }
+
+        /// <summary>Листы, которые есть в книге.</summary>
+        public IReadOnlyList<string> AvailableSheets { get; private set; }
     }
 
     /// <summary>
@@ -39,6 +51,10 @@ namespace ParkApp.components.Application
     /// </summary>
     public interface ITableFileValidator
     {
-        TableFileCheck Check(TableFileKind kind, string path);
+        /// <param name="sheetName">Ожидаемое имя листа. Пусто — имя по умолчанию.</param>
+        TableFileCheck Check(TableFileKind kind, string path, string sheetName);
+
+        /// <summary>Имена листов книги. Пустой список, если файл не читается.</summary>
+        IReadOnlyList<string> GetSheetNames(string path);
     }
 }

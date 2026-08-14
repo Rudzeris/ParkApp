@@ -40,6 +40,46 @@ namespace ParkApp.components.Infrastructure.Excel
             return ReadCore(path, sheetName, true);
         }
 
+        /// <summary>Имена листов книги в порядке следования. Пустой список, если файл не читается.</summary>
+        public static IList<string> SheetNames(string path)
+        {
+            var names = new List<string>();
+
+            if (!File.Exists(path))
+                return names;
+
+            try
+            {
+                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                {
+                    var workbookEntry = archive.GetEntry("xl/workbook.xml");
+                    if (workbookEntry == null)
+                        return names;
+
+                    using (var workbookStream = workbookEntry.Open())
+                    {
+                        var document = XDocument.Load(workbookStream);
+                        if (document.Root == null)
+                            return names;
+
+                        foreach (var sheet in document.Root.Descendants(Main + "sheet"))
+                        {
+                            var name = (string)sheet.Attribute("name");
+                            if (!string.IsNullOrWhiteSpace(name))
+                                names.Add(name);
+                        }
+                    }
+                }
+            }
+            catch (InvalidDataException)
+            {
+                // не .xlsx или файл повреждён — вернём пустой список, разберётся вызывающий
+            }
+
+            return names;
+        }
+
         private static SheetTable ReadCore(string path, string preferredSheetName, bool requireSheet)
         {
             if (!File.Exists(path))

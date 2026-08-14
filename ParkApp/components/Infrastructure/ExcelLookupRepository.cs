@@ -12,8 +12,15 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelLookupRepository : ILookupRepository
     {
-        public const string AffiliationSheetName = "Куда относится";
-        public const string VehicleTypeSheetName = "Тип машины";
+        public static string AffiliationSheetName
+        {
+            get { return AppSheets.Name(SheetKind.Affiliation); }
+        }
+
+        public static string VehicleTypeSheetName
+        {
+            get { return AppSheets.Name(SheetKind.VehicleType); }
+        }
 
         private static readonly object Sync = new object();
 
