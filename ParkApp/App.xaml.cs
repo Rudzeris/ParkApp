@@ -15,7 +15,7 @@ namespace ParkApp
 
             var window = new MainWindow
             {
-                DataContext = AppServices.CreateCarListViewModel()
+                DataContext = AppServices.CreateMainViewModel()
             };
 
             window.Show();

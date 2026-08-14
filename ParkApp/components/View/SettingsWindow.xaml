@@ -1,0 +1,42 @@
+<Window x:Class="ParkApp.components.View.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки" Height="380" Width="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanMinimize">
+
+    <DockPanel Margin="12">
+
+        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,10"
+                   Text="Отметьте разделы, с которыми работаете. Невыбранные не появятся на панели главного окна." />
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Сохранить" Command="{Binding SaveCommand}" IsDefault="True"
+                    Width="120" Padding="0,4" />
+            <Button Content="Отмена" Command="{Binding CancelCommand}"
+                    Width="120" Padding="0,4" Margin="8,0,0,0" />
+        </StackPanel>
+
+        <ListBox ItemsSource="{Binding Sections}" BorderThickness="1">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Focusable" Value="False" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <CheckBox IsChecked="{Binding IsEnabled}"
+                                  IsEnabled="{Binding IsAvailable}"
+                                  Content="{Binding Title}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Note}" Foreground="Gray" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" FontStyle="Italic" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+    </DockPanel>
+</Window>

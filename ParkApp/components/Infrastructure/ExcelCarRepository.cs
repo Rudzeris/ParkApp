@@ -347,7 +347,15 @@ namespace ParkApp.components.Infrastructure
                 }
             };
 
-            XlsxWriter.Write(path, SheetName, headers, rows);
+            // рядом с данными — справочные листы: заказчик ведёт их в том же файле
+            XlsxWriter.Write(path, new List<XlsxSheet>
+            {
+                new XlsxSheet(SheetName, headers, rows),
+                XlsxSheet.Lookup(ExcelLookupRepository.AffiliationSheetName,
+                    new[] { "Гараж", "Обеспечение" }),
+                XlsxSheet.Lookup(ExcelLookupRepository.VehicleTypeSheetName,
+                    new[] { "легковой седан", "легковой универсал", "автобус", "грузовой" })
+            });
         }
     }
 }

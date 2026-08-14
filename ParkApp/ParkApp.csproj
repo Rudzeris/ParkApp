@@ -81,19 +81,28 @@
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
         </Page>
+        <Page Include="components\View\SettingsWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <SubType>Designer</SubType>
+        </Page>
         <Compile Include="App.xaml.cs">
             <DependentUpon>App.xaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
         <Compile Include="AppServices.cs" />
+        <Compile Include="components\Application\AppSection.cs" />
         <Compile Include="components\Application\CarService.cs" />
         <Compile Include="components\Application\FineFilter.cs" />
         <Compile Include="components\Application\FineService.cs" />
+        <Compile Include="components\Application\IAppSettings.cs" />
         <Compile Include="components\Application\ICarRepository.cs" />
+        <Compile Include="components\Application\ILookupRepository.cs" />
         <Compile Include="components\Application\IPersonRepository.cs" />
         <Compile Include="components\Application\IFileDialogService.cs" />
         <Compile Include="components\Application\IFineRepository.cs" />
         <Compile Include="components\Application\IScanStorage.cs" />
+        <Compile Include="components\Application\LookupList.cs" />
+        <Compile Include="components\Application\LookupService.cs" />
         <Compile Include="components\Application\PersonService.cs" />
         <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Domain\Car.cs" />
@@ -106,12 +115,15 @@
         <Compile Include="components\Infrastructure\Excel\SheetTable.cs" />
         <Compile Include="components\Infrastructure\Excel\XlsxCell.cs" />
         <Compile Include="components\Infrastructure\Excel\XlsxReader.cs" />
+        <Compile Include="components\Infrastructure\Excel\XlsxSheet.cs" />
         <Compile Include="components\Infrastructure\Excel\XlsxWriter.cs" />
         <Compile Include="components\Infrastructure\ExcelCarRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelFineRepository.cs" />
+        <Compile Include="components\Infrastructure\ExcelLookupRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelPersonRepository.cs" />
         <Compile Include="components\Infrastructure\FileScanStorage.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
+        <Compile Include="components\Infrastructure\XmlAppSettings.cs" />
         <Compile Include="components\View\FineEditWindow.xaml.cs">
             <DependentUpon>FineEditWindow.xaml</DependentUpon>
             <SubType>Code</SubType>
@@ -120,7 +132,12 @@
             <DependentUpon>FinesWindow.xaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
+        <Compile Include="components\View\SettingsWindow.xaml.cs">
+            <DependentUpon>SettingsWindow.xaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
         <Compile Include="components\View\WpfFineDialogService.cs" />
+        <Compile Include="components\View\WpfMainDialogService.cs" />
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
         <Compile Include="components\ViewModel\CarOption.cs" />
         <Compile Include="components\ViewModel\CarRowViewModel.cs" />
@@ -128,7 +145,10 @@
         <Compile Include="components\ViewModel\FineListViewModel.cs" />
         <Compile Include="components\ViewModel\FineRowViewModel.cs" />
         <Compile Include="components\ViewModel\IFineDialogService.cs" />
+        <Compile Include="components\ViewModel\IMainDialogService.cs" />
+        <Compile Include="components\ViewModel\MainViewModel.cs" />
         <Compile Include="components\ViewModel\RelayCommand.cs" />
+        <Compile Include="components\ViewModel\SettingsViewModel.cs" />
         <Compile Include="components\ViewModel\ViewModelBase.cs" />
         <Compile Include="MainWindow.xaml.cs">
             <DependentUpon>MainWindow.xaml</DependentUpon>

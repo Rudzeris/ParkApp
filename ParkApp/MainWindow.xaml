@@ -14,17 +14,37 @@
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
-                <Button Content="Штрафы" Click="OnFinesClick" Padding="12,2" />
+                <ItemsControl ItemsSource="{Binding Sections}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Title}" Command="{Binding Open}"
+                                    Padding="12,2" Margin="0,0,4,0" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Separator />
+                <Button Content="Настройки" Command="{Binding OpenSettingsCommand}" Padding="12,2" />
             </ToolBar>
         </ToolBarTray>
 
         <Border DockPanel.Dock="Top" Margin="6,6,6,0" Padding="8"
                 Background="#FDF3F2" BorderBrush="#C0392B" BorderThickness="1"
-                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="{Binding Error}" Foreground="#C0392B" TextWrapping="Wrap" />
+                Visibility="{Binding Cars.HasError, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Cars.Error}" Foreground="#C0392B" TextWrapping="Wrap" />
         </Border>
 
-        <ListView Margin="6" ItemsSource="{Binding Cars}">
+        <Border DockPanel.Dock="Top" Margin="6,6,6,0" Padding="8"
+                Background="#FDF8E3" BorderBrush="#B7950B" BorderThickness="1"
+                Visibility="{Binding Cars.HasWarning, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Cars.Warning}" Foreground="#7D6608" TextWrapping="Wrap" />
+        </Border>
+
+        <ListView Margin="6" ItemsSource="{Binding Cars.Cars}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Марка" Width="150" DisplayMemberBinding="{Binding Model}" />
