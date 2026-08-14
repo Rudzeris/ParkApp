@@ -10,26 +10,23 @@ using ParkApp.components.Domain;
 namespace ParkApp.components.ViewModel
 {
     /// <summary>
-    /// Список штрафов с отбором по машине, водителю, периоду и тексту.
+    /// Книга постановлений: отбор по машине, правонарушителю, периоду, оплате и тексту.
     /// </summary>
     public class FineListViewModel : ViewModelBase
     {
         private readonly FineService _fines;
         private readonly CarService _cars;
-        private readonly PersonService _people;
         private readonly IScanStorage _scans;
         private readonly IFineDialogService _dialogs;
         private readonly IFileDialogService _fileDialogs;
 
         private List<Car> _allCars = new List<Car>();
-        private List<Person> _allPeople = new List<Person>();
-        private Dictionary<string, Car> _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
-        private IDictionary<int, Person> _peopleById = new Dictionary<int, Person>();
+        private Dictionary<string, Car> _carsByPlate = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
         private bool _isLoading;
         private bool _reloadRequested;
 
         private CarOption _selectedCarOption;
-        private PersonOption _selectedDriverOption;
+        private string _offenderFilter;
         private DateTime? _dateFrom;
         private DateTime? _dateTo;
         private string _textFilter;
@@ -42,21 +39,18 @@ namespace ParkApp.components.ViewModel
         public FineListViewModel(
             FineService fines,
             CarService cars,
-            PersonService people,
             IScanStorage scans,
             IFineDialogService dialogs,
             IFileDialogService fileDialogs)
         {
             _fines = fines;
             _cars = cars;
-            _people = people;
             _scans = scans;
             _dialogs = dialogs;
             _fileDialogs = fileDialogs;
 
             Fines = new ObservableCollection<FineRowViewModel>();
             CarOptions = new ObservableCollection<CarOption>();
-            DriverOptions = new ObservableCollection<PersonOption>();
 
             PaymentOptions = new ObservableCollection<PaymentFilterOption>
             {
@@ -76,7 +70,6 @@ namespace ParkApp.components.ViewModel
 
         public ObservableCollection<FineRowViewModel> Fines { get; private set; }
         public ObservableCollection<CarOption> CarOptions { get; private set; }
-        public ObservableCollection<PersonOption> DriverOptions { get; private set; }
         public ObservableCollection<PaymentFilterOption> PaymentOptions { get; private set; }
 
         public ICommand AddCommand { get; private set; }
@@ -92,10 +85,11 @@ namespace ParkApp.components.ViewModel
             set { if (SetProperty(ref _selectedCarOption, value)) Reload(); }
         }
 
-        public PersonOption SelectedDriverOption
+        /// <summary>Часть Ф.И.О. правонарушителя.</summary>
+        public string OffenderFilter
         {
-            get { return _selectedDriverOption; }
-            set { if (SetProperty(ref _selectedDriverOption, value)) Reload(); }
+            get { return _offenderFilter; }
+            set { if (SetProperty(ref _offenderFilter, value)) Reload(); }
         }
 
         public PaymentFilterOption SelectedPaymentOption
@@ -148,47 +142,58 @@ namespace ParkApp.components.ViewModel
             private set { SetProperty(ref _status, value); }
         }
 
-        /// <summary>Загружает машины и штрафы. Вызывается после создания окна.</summary>
+        /// <summary>Загружает машины и книгу. Вызывается после создания окна.</summary>
         public async Task InitializeAsync()
         {
             try
             {
-                var cars = await _cars.GetAllAsync();
-                _allCars = cars.OrderBy(CarOption.ModelText).ToList();
-
-                _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
-                foreach (var car in _allCars)
-                {
-                    if (!string.IsNullOrWhiteSpace(car.Vin))
-                        _carsByVin[car.Vin.Trim()] = car;
-                }
-
-                CarOptions.Clear();
-                CarOptions.Add(new CarOption(null, "— все машины —"));
-                foreach (var car in _allCars)
-                    CarOptions.Add(CarOption.ForCar(car));
-
-                _selectedCarOption = CarOptions[0];
-                OnPropertyChanged("SelectedCarOption");
-
-                var people = await _people.GetAllAsync();
-                _allPeople = people.ToList();
-                _peopleById = await _people.GetByIdAsync();
-
-                DriverOptions.Clear();
-                DriverOptions.Add(new PersonOption(null, "— все водители —"));
-                foreach (var person in _allPeople)
-                    DriverOptions.Add(PersonOption.ForPerson(person));
-
-                _selectedDriverOption = DriverOptions[0];
-                OnPropertyChanged("SelectedDriverOption");
-
+                await LoadCarsAsync();
                 await ReloadAsync();
             }
             catch (Exception ex)
             {
                 _dialogs.ShowError("Не удалось загрузить данные: " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Реестр машин нужен только для подсказки по ГРЗ: книгу можно вести
+        /// и без него, поэтому его недоступность не мешает открыть окно.
+        /// </summary>
+        private async Task LoadCarsAsync()
+        {
+            try
+            {
+                var cars = await _cars.GetAllAsync();
+                _allCars = cars.OrderBy(CarOption.ModelText).ToList();
+            }
+            catch (Exception ex)
+            {
+                _allCars = new List<Car>();
+                _dialogs.ShowError("Реестр машин не прочитан, подсказки по ГРЗ недоступны: " + ex.Message);
+            }
+
+            _carsByPlate = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
+            foreach (var car in _allCars)
+            {
+                foreach (var number in car.Numbers ?? new List<CarNumber>())
+                {
+                    if (number == null || string.IsNullOrWhiteSpace(number.Text))
+                        continue;
+
+                    var key = FineService.NormalizePlate(number.Text);
+                    if (key.Length > 0 && !_carsByPlate.ContainsKey(key))
+                        _carsByPlate.Add(key, car);
+                }
+            }
+
+            CarOptions.Clear();
+            CarOptions.Add(new CarOption(null, "— все машины —"));
+            foreach (var car in _allCars)
+                CarOptions.Add(CarOption.ForCar(car));
+
+            _selectedCarOption = CarOptions[0];
+            OnPropertyChanged("SelectedCarOption");
         }
 
         private async void Reload()
@@ -228,8 +233,8 @@ namespace ParkApp.components.ViewModel
             {
                 var filter = new FineFilter
                 {
-                    CarVin = _selectedCarOption != null ? _selectedCarOption.Vin : null,
-                    DriverId = _selectedDriverOption != null ? _selectedDriverOption.Id : null,
+                    CarPlate = _selectedCarOption != null ? _selectedCarOption.Plate : null,
+                    OffenderName = OffenderFilter,
                     From = DateFrom,
                     To = DateTo,
                     Text = TextFilter,
@@ -244,13 +249,9 @@ namespace ParkApp.components.ViewModel
                 foreach (var fine in found)
                 {
                     Car car;
-                    _carsByVin.TryGetValue((fine.CarVin ?? string.Empty).Trim(), out car);
+                    _carsByPlate.TryGetValue(FineService.NormalizePlate(fine.CarPlate), out car);
 
-                    Person driver = null;
-                    if (fine.DriverId.HasValue)
-                        _peopleById.TryGetValue(fine.DriverId.Value, out driver);
-
-                    Fines.Add(new FineRowViewModel(fine, car, driver, _scans.Exists(fine.ScanPath)));
+                    Fines.Add(new FineRowViewModel(fine, car, _scans.Exists(fine.ScanPath)));
                 }
 
                 if (selectedNumber != null)
@@ -262,22 +263,22 @@ namespace ParkApp.components.ViewModel
             }
             catch (Exception ex)
             {
-                _dialogs.ShowError("Не удалось загрузить штрафы: " + ex.Message);
+                _dialogs.ShowError("Не удалось прочитать книгу постановлений: " + ex.Message);
             }
         }
 
         private void ResetFilter()
         {
             _selectedCarOption = CarOptions.Count > 0 ? CarOptions[0] : null;
-            _selectedDriverOption = DriverOptions.Count > 0 ? DriverOptions[0] : null;
             _selectedPaymentOption = PaymentOptions.Count > 0 ? PaymentOptions[0] : null;
+            _offenderFilter = null;
             _dateFrom = null;
             _dateTo = null;
             _textFilter = null;
 
             OnPropertyChanged("SelectedCarOption");
-            OnPropertyChanged("SelectedDriverOption");
             OnPropertyChanged("SelectedPaymentOption");
+            OnPropertyChanged("OffenderFilter");
             OnPropertyChanged("DateFrom");
             OnPropertyChanged("DateTo");
             OnPropertyChanged("TextFilter");
@@ -293,9 +294,15 @@ namespace ParkApp.components.ViewModel
                 ViolationDate = DateTime.Today
             };
 
-            // если список отфильтрован по машине, подставляем её — обычно вносят пачку штрафов на одну машину
-            if (_selectedCarOption != null && _selectedCarOption.Vin != null)
-                fine.CarVin = _selectedCarOption.Vin;
+            // если список отфильтрован по машине, подставляем её: обычно вносят пачку на одну машину
+            if (_selectedCarOption != null && _selectedCarOption.Plate != null)
+            {
+                fine.CarPlate = _selectedCarOption.Plate;
+
+                Car car;
+                if (_carsByPlate.TryGetValue(FineService.NormalizePlate(fine.CarPlate), out car))
+                    fine.CarBrand = car.Model;
+            }
 
             ShowEditor(fine, true);
         }
@@ -311,7 +318,7 @@ namespace ParkApp.components.ViewModel
 
         private void ShowEditor(Fine fine, bool isNew)
         {
-            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, _allPeople, fine, isNew);
+            var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, fine, isNew);
             if (_dialogs.ShowEditor(editor))
                 Reload();
         }
@@ -329,7 +336,7 @@ namespace ParkApp.components.ViewModel
                 Environment.NewLine,
                 row.HasScan ? "Вложенный скан постановления тоже будет удалён." : string.Empty);
 
-            if (!_dialogs.Confirm(message, "Удаление штрафа"))
+            if (!_dialogs.Confirm(message, "Удаление записи"))
                 return;
 
             try
@@ -343,7 +350,7 @@ namespace ParkApp.components.ViewModel
             }
             catch (Exception ex)
             {
-                _dialogs.ShowError("Не удалось удалить штраф: " + ex.Message);
+                _dialogs.ShowError("Не удалось удалить запись: " + ex.Message);
             }
         }
 
@@ -367,15 +374,18 @@ namespace ParkApp.components.ViewModel
         {
             return new Fine
             {
+                RowNumber = source.RowNumber,
                 ResolutionNumber = source.ResolutionNumber,
                 ResolutionDate = source.ResolutionDate,
                 ViolationDate = source.ViolationDate,
-                ViolationPlace = source.ViolationPlace,
-                IsPaid = source.IsPaid,
-                PaidDate = source.PaidDate,
-                CarVin = source.CarVin,
-                DriverId = source.DriverId,
+                OffenderName = source.OffenderName,
+                CarBrand = source.CarBrand,
+                CarPlate = source.CarPlate,
                 Amount = source.Amount,
+                PaymentText = source.PaymentText,
+                PaidDate = source.PaidDate,
+                PaymentReference = source.PaymentReference,
+                Notes = source.Notes,
                 ScanPath = source.ScanPath
             };
         }

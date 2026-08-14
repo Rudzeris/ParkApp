@@ -10,19 +10,38 @@ namespace ParkApp.components.ViewModel
     public class CarOption
     {
         public CarOption(string vin, string display)
+            : this(vin, null, display)
+        {
+        }
+
+        public CarOption(string vin, string plate, string display)
         {
             Vin = vin;
+            Plate = plate;
             Display = display;
         }
 
         /// <summary>VIN машины. null — «все машины» в фильтре.</summary>
         public string Vin { get; private set; }
 
+        /// <summary>Первый гос. номер — по нему книга постановлений связывается с машиной.</summary>
+        public string Plate { get; private set; }
+
         public string Display { get; private set; }
 
         public static CarOption ForCar(Car car)
         {
-            return new CarOption(car.Vin, Describe(car));
+            return new CarOption(car.Vin, FirstPlate(car), Describe(car));
+        }
+
+        /// <summary>Первый гос. номер машины.</summary>
+        public static string FirstPlate(Car car)
+        {
+            if (car == null || car.Numbers == null)
+                return null;
+
+            var number = car.Numbers.FirstOrDefault(n => n != null && !string.IsNullOrWhiteSpace(n.Text));
+            return number == null ? null : number.Text.Trim();
         }
 
         /// <summary>«УАЗ-3163 · 0123АВ, А123ВС16 · XTT316300E0012345»</summary>

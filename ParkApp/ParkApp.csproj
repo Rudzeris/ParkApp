@@ -110,6 +110,7 @@
         <Compile Include="components\Application\LookupList.cs" />
         <Compile Include="components\Application\LookupService.cs" />
         <Compile Include="components\Application\PathSetting.cs" />
+        <Compile Include="components\Application\PaymentTextParser.cs" />
         <Compile Include="components\Application\PersonService.cs" />
         <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Application\SheetKind.cs" />
@@ -167,7 +168,6 @@
         <Compile Include="components\ViewModel\MainViewModel.cs" />
         <Compile Include="components\ViewModel\PathSettingViewModel.cs" />
         <Compile Include="components\ViewModel\PaymentFilterOption.cs" />
-        <Compile Include="components\ViewModel\PersonOption.cs" />
         <Compile Include="components\ViewModel\RelayCommand.cs" />
         <Compile Include="components\ViewModel\SettingsViewModel.cs" />
         <Compile Include="components\ViewModel\SheetSettingViewModel.cs" />
