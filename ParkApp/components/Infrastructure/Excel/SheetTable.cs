@@ -6,6 +6,25 @@ using System.Linq;
 namespace ParkApp.components.Infrastructure.Excel
 {
     /// <summary>
+    /// Ячейка как она лежит в файле. Нужна, чтобы вернуть на место содержимое
+    /// столбцов, которых приложение не знает: иначе дата в чужом столбце
+    /// при перезаписи превратится в число.
+    /// </summary>
+    public class RawCell
+    {
+        public RawCell(string value, bool isText, int style)
+        {
+            Value = value;
+            IsText = isText;
+            Style = style;
+        }
+
+        public string Value { get; private set; }
+        public bool IsText { get; private set; }
+        public int Style { get; private set; }
+    }
+
+    /// <summary>
     /// Лист как «шапка + строки». Столбцы ищутся по названию, а не по номеру:
     /// в живых таблицах столбцы переставляют и переименовывают.
     /// </summary>
@@ -13,11 +32,13 @@ namespace ParkApp.components.Infrastructure.Excel
     {
         private readonly List<string> _headers;
         private readonly List<string[]> _rows;
+        private readonly List<RawCell[]> _rawRows;
 
-        private SheetTable(List<string> headers, List<string[]> rows)
+        private SheetTable(List<string> headers, List<string[]> rows, List<RawCell[]> rawRows)
         {
             _headers = headers;
             _rows = rows;
+            _rawRows = rawRows;
         }
 
         public IList<string> Headers
@@ -30,23 +51,40 @@ namespace ParkApp.components.Infrastructure.Excel
             get { return _rows; }
         }
 
+        /// <summary>Те же строки, но с типом и оформлением ячеек. Порядок совпадает с <see cref="Rows"/>.</summary>
+        public IList<RawCell[]> RawRows
+        {
+            get { return _rawRows; }
+        }
+
+        /// <summary>Таблица без строк — только шапка. Нужна, чтобы найти столбцы по списку названий.</summary>
+        public static SheetTable FromHeaders(IList<string> headers)
+        {
+            return new SheetTable(
+                headers.Select(h => (h ?? string.Empty).Trim()).ToList(),
+                new List<string[]>(),
+                new List<RawCell[]>());
+        }
+
         /// <summary>Первая непустая строка считается шапкой, остальные — данными.</summary>
-        public static SheetTable FromRows(IList<string[]> rawRows)
+        public static SheetTable FromRows(IList<RawCell[]> sourceRows)
         {
             var headers = new List<string>();
             var rows = new List<string[]>();
+            var rawRows = new List<RawCell[]>();
             var headerFound = false;
 
-            foreach (var row in rawRows)
+            foreach (var row in sourceRows)
             {
-                var isEmpty = row.All(string.IsNullOrWhiteSpace);
+                var text = row.Select(cell => cell == null ? null : cell.Value).ToArray();
+                var isEmpty = text.All(string.IsNullOrWhiteSpace);
 
                 if (!headerFound)
                 {
                     if (isEmpty)
                         continue;
 
-                    headers.AddRange(row.Select(value => (value ?? string.Empty).Trim()));
+                    headers.AddRange(text.Select(value => (value ?? string.Empty).Trim()));
                     headerFound = true;
                     continue;
                 }
@@ -54,10 +92,11 @@ namespace ParkApp.components.Infrastructure.Excel
                 if (isEmpty)
                     continue;
 
-                rows.Add(row);
+                rows.Add(text);
+                rawRows.Add(row);
             }
 
-            return new SheetTable(headers, rows);
+            return new SheetTable(headers, rows, rawRows);
         }
 
         /// <summary>

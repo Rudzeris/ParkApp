@@ -1,7 +1,7 @@
 <Window x:Class="ParkApp.components.View.FinesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Штрафы" Height="620" Width="1120"
+        Title="Книга постановлений" Height="640" Width="1300"
         WindowStartupLocation="CenterOwner">
     <DockPanel>
 
@@ -21,21 +21,20 @@
             <StackPanel Margin="4">
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                    <TextBlock Text="Машина:" VerticalAlignment="Center" Width="70" />
-                    <ComboBox Width="330"
+                    <TextBlock Text="Машина:" VerticalAlignment="Center" Width="90" />
+                    <ComboBox Width="320"
                               ItemsSource="{Binding CarOptions}"
                               DisplayMemberPath="Display"
-                              SelectedItem="{Binding SelectedCarOption}" />
+                              SelectedItem="{Binding SelectedCarOption}"
+                              ToolTip="Отбор по гос. рег. знаку из реестра машин" />
 
-                    <TextBlock Text="Водитель:" VerticalAlignment="Center" Margin="16,0,6,0" />
-                    <ComboBox Width="260"
-                              ItemsSource="{Binding DriverOptions}"
-                              DisplayMemberPath="Display"
-                              SelectedItem="{Binding SelectedDriverOption}" />
+                    <TextBlock Text="Правонарушитель:" VerticalAlignment="Center" Margin="16,0,6,0" />
+                    <TextBox Width="200"
+                             Text="{Binding OffenderFilter, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
 
                     <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="16,0,6,0" />
-                    <TextBox Width="220"
-                             ToolTip="Номер постановления или место нарушения"
+                    <TextBox Width="200"
+                             ToolTip="Номер постановления, марка или примечание"
                              Text="{Binding TextFilter, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
                 </StackPanel>
 
@@ -90,21 +89,23 @@
             </ListView.InputBindings>
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="№ постановления" Width="180"
-                                    DisplayMemberBinding="{Binding ResolutionNumber}" />
-                    <GridViewColumn Header="Дата постановления" Width="130"
-                                    DisplayMemberBinding="{Binding ResolutionDate, StringFormat={}{0:dd.MM.yyyy}}" />
-                    <GridViewColumn Header="Дата нарушения" Width="120"
+                    <GridViewColumn Header="№ п/п" Width="50"
+                                    DisplayMemberBinding="{Binding RowNumber}" />
+                    <GridViewColumn Header="Дата правонарушения" Width="130"
                                     DisplayMemberBinding="{Binding ViolationDate, StringFormat={}{0:dd.MM.yyyy}}" />
-                    <GridViewColumn Header="Модель" Width="110"
-                                    DisplayMemberBinding="{Binding CarModel}" />
-                    <GridViewColumn Header="Гос. номера" Width="150"
-                                    DisplayMemberBinding="{Binding CarPlates}" />
-                    <GridViewColumn Header="Водитель" Width="150"
-                                    DisplayMemberBinding="{Binding DriverName}" />
-                    <GridViewColumn Header="Место нарушения" Width="180"
-                                    DisplayMemberBinding="{Binding ViolationPlace}" />
-                    <GridViewColumn Header="Сумма, руб." Width="100">
+                    <GridViewColumn Header="Ф.И.О. правонарушителя" Width="180"
+                                    DisplayMemberBinding="{Binding OffenderName}" />
+                    <GridViewColumn Header="Марка АТ" Width="110"
+                                    DisplayMemberBinding="{Binding CarBrand}" />
+                    <GridViewColumn Header="ГРЗ" Width="110"
+                                    DisplayMemberBinding="{Binding CarPlate}" />
+                    <GridViewColumn Header="В реестре" Width="110"
+                                    DisplayMemberBinding="{Binding RegistryText}" />
+                    <GridViewColumn Header="Дата привлечения" Width="120"
+                                    DisplayMemberBinding="{Binding ResolutionDate, StringFormat={}{0:dd.MM.yyyy}}" />
+                    <GridViewColumn Header="Номер постановления" Width="160"
+                                    DisplayMemberBinding="{Binding ResolutionNumber}" />
+                    <GridViewColumn Header="Сумма, руб." Width="90">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Amount, StringFormat={}{0:N2}}"
@@ -112,9 +113,11 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Оплата" Width="140"
+                    <GridViewColumn Header="Оплата, чек, дата" Width="230"
                                     DisplayMemberBinding="{Binding PaidText}" />
-                    <GridViewColumn Header="Скан" Width="60"
+                    <GridViewColumn Header="Примечание" Width="180"
+                                    DisplayMemberBinding="{Binding Notes}" />
+                    <GridViewColumn Header="Скан" Width="55"
                                     DisplayMemberBinding="{Binding ScanMark}" />
                 </GridView>
             </ListView.View>

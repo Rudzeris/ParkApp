@@ -78,13 +78,15 @@ namespace ParkApp.components.Infrastructure
 
                 case TableFileKind.Fines:
                     if (sheet.Column(ExcelFineRepository.NumberNames) < 0)
-                        return Invalid("не найден обязательный столбец «№ постановления»");
+                        return Invalid("не найден обязательный столбец «Номер постановления»");
 
-                    Optional(sheet, missing, "Дата постановления", ExcelFineRepository.ResolutionDateNames);
-                    Optional(sheet, missing, "Дата нарушения", ExcelFineRepository.ViolationDateNames);
-                    Optional(sheet, missing, "VIN машины", ExcelFineRepository.VinNames);
-                    Optional(sheet, missing, "Водитель", ExcelFineRepository.DriverNames);
-                    Optional(sheet, missing, "Сумма", ExcelFineRepository.AmountNames);
+                    Optional(sheet, missing, "Дата правонарушения, Ф.И.О.", ExcelFineRepository.ViolationNames);
+                    Optional(sheet, missing, "Марка АТ", ExcelFineRepository.BrandNames);
+                    Optional(sheet, missing, "ГРЗ", ExcelFineRepository.PlateNames);
+                    Optional(sheet, missing, "Дата привлечения", ExcelFineRepository.ResolutionDateNames);
+                    Optional(sheet, missing, "Сумма штрафа", ExcelFineRepository.AmountNames);
+                    Optional(sheet, missing, "оплата, чек, дата", ExcelFineRepository.PaymentNames);
+                    Optional(sheet, missing, "Примечание", ExcelFineRepository.NotesNames);
                     break;
 
                 default:

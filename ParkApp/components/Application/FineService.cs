@@ -7,7 +7,7 @@ using ParkApp.components.Domain;
 namespace ParkApp.components.Application
 {
     /// <summary>
-    /// Сценарии работы со штрафами: отбор, подсчёт итогов, проверка и сохранение.
+    /// Сценарии работы с книгой постановлений: отбор, подсчёт итогов, проверка и сохранение.
     /// Правила проверки живут здесь, а не в окне, чтобы одинаково работать
     /// при вводе из UI и при возможном импорте.
     /// </summary>
@@ -19,7 +19,7 @@ namespace ParkApp.components.Application
 
         public Task<IReadOnlyList<Fine>> GetAllAsync() => _repo.GetAllAsync();
 
-        /// <summary>Штрафы по условиям отбора, свежие сверху.</summary>
+        /// <summary>Штрафы по условиям отбора. Порядок книги сохраняется.</summary>
         public async Task<IReadOnlyList<Fine>> FindAsync(FineFilter filter)
         {
             var all = await _repo.GetAllAsync();
@@ -27,11 +27,11 @@ namespace ParkApp.components.Application
 
             if (filter != null)
             {
-                if (!string.IsNullOrWhiteSpace(filter.CarVin))
-                    query = query.Where(f => string.Equals(f.CarVin, filter.CarVin, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(filter.CarPlate))
+                    query = query.Where(f => SamePlate(f.CarPlate, filter.CarPlate));
 
-                if (filter.DriverId.HasValue)
-                    query = query.Where(f => f.DriverId == filter.DriverId.Value);
+                if (!string.IsNullOrWhiteSpace(filter.OffenderName))
+                    query = query.Where(f => Contains(f.OffenderName, filter.OffenderName));
 
                 if (filter.From.HasValue)
                 {
@@ -50,13 +50,11 @@ namespace ParkApp.components.Application
 
                 if (!string.IsNullOrWhiteSpace(filter.Text))
                     query = query.Where(f => Contains(f.ResolutionNumber, filter.Text)
-                                             || Contains(f.ViolationPlace, filter.Text));
+                                             || Contains(f.CarBrand, filter.Text)
+                                             || Contains(f.Notes, filter.Text));
             }
 
-            return query
-                .OrderByDescending(f => f.ViolationDate)
-                .ThenBy(f => f.ResolutionNumber)
-                .ToList();
+            return query.ToList();
         }
 
         public Task<Fine> GetByNumberAsync(string resolutionNumber) => _repo.GetByNumberAsync(resolutionNumber);
@@ -64,14 +62,26 @@ namespace ParkApp.components.Application
         /// <summary>Итоговая сумма по набору штрафов.</summary>
         public decimal GetTotal(IEnumerable<Fine> fines) => fines == null ? 0m : fines.Sum(f => f.Amount);
 
-        /// <summary>Сколько из этих штрафов ещё не оплачено — главный вопрос к реестру.</summary>
+        /// <summary>Сколько из этих штрафов ещё не оплачено — главный вопрос к книге.</summary>
         public decimal GetUnpaidTotal(IEnumerable<Fine> fines)
         {
             return fines == null ? 0m : fines.Where(f => !f.IsPaid).Sum(f => f.Amount);
         }
 
+        /// <summary>Гос. номера, которые уже встречались в книге — для подсказки при вводе.</summary>
+        public async Task<IReadOnlyList<string>> GetKnownPlatesAsync()
+        {
+            var all = await _repo.GetAllAsync();
+            return all
+                .Select(f => (f.CarPlate ?? string.Empty).Trim())
+                .Where(plate => plate.Length > 0)
+                .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                .OrderBy(plate => plate)
+                .ToList();
+        }
+
         /// <summary>
-        /// Проверяет штраф. Пустой список — ошибок нет.
+        /// Проверяет запись. Пустой список — ошибок нет.
         /// </summary>
         /// <param name="isNew">true для новой записи: тогда проверяется уникальность номера постановления.</param>
         public async Task<IReadOnlyList<string>> ValidateAsync(Fine fine, bool isNew)
@@ -93,28 +103,28 @@ namespace ParkApp.components.Application
             {
                 var existing = await _repo.GetByNumberAsync(number);
                 if (existing != null)
-                    errors.Add(string.Format("Постановление № {0} уже есть в базе.", number));
+                    errors.Add(string.Format("Постановление № {0} уже есть в книге.", number));
             }
 
             var today = DateTime.Today;
             var empty = default(DateTime);
 
             if (fine.ResolutionDate == empty)
-                errors.Add("Укажите дату постановления.");
+                errors.Add("Укажите дату привлечения.");
             else if (fine.ResolutionDate.Date > today)
-                errors.Add("Дата постановления не может быть в будущем.");
+                errors.Add("Дата привлечения не может быть в будущем.");
 
             if (fine.ViolationDate == empty)
-                errors.Add("Укажите дату нарушения.");
+                errors.Add("Укажите дату правонарушения.");
             else if (fine.ViolationDate.Date > today)
-                errors.Add("Дата нарушения не может быть в будущем.");
+                errors.Add("Дата правонарушения не может быть в будущем.");
 
             if (fine.ResolutionDate != empty && fine.ViolationDate != empty
                 && fine.ViolationDate.Date > fine.ResolutionDate.Date)
-                errors.Add("Дата нарушения не может быть позже даты постановления.");
+                errors.Add("Дата правонарушения не может быть позже даты привлечения.");
 
-            if (string.IsNullOrWhiteSpace(fine.CarVin))
-                errors.Add("Выберите машину.");
+            if (string.IsNullOrWhiteSpace(fine.CarPlate))
+                errors.Add("Укажите гос. рег. знак.");
 
             if (fine.Amount <= 0m)
                 errors.Add("Сумма штрафа должна быть больше нуля.");
@@ -125,7 +135,7 @@ namespace ParkApp.components.Application
                     errors.Add("Дата оплаты не может быть в будущем.");
 
                 if (fine.ResolutionDate != empty && fine.PaidDate.Value.Date < fine.ResolutionDate.Date)
-                    errors.Add("Дата оплаты не может быть раньше даты постановления.");
+                    errors.Add("Дата оплаты не может быть раньше даты привлечения.");
             }
 
             return errors;
@@ -157,18 +167,17 @@ namespace ParkApp.components.Application
         private static void Normalize(Fine fine)
         {
             fine.ResolutionNumber = (fine.ResolutionNumber ?? string.Empty).Trim();
-            fine.ViolationPlace = Trim(fine.ViolationPlace);
-            fine.CarVin = (fine.CarVin ?? string.Empty).Trim();
+            fine.CarPlate = (fine.CarPlate ?? string.Empty).Trim();
+            fine.CarBrand = Trim(fine.CarBrand);
+            fine.OffenderName = Trim(fine.OffenderName);
+            fine.Notes = Trim(fine.Notes);
+            fine.PaymentReference = Trim(fine.PaymentReference);
+            fine.PaymentText = Trim(fine.PaymentText);
             fine.ResolutionDate = fine.ResolutionDate.Date;
             fine.ViolationDate = fine.ViolationDate.Date;
 
             if (fine.PaidDate.HasValue)
-            {
                 fine.PaidDate = fine.PaidDate.Value.Date;
-
-                // дата оплаты сама по себе означает, что штраф оплачен
-                fine.IsPaid = true;
-            }
         }
 
         private static string Trim(string value)
@@ -176,6 +185,21 @@ namespace ParkApp.components.Application
             if (string.IsNullOrWhiteSpace(value))
                 return null;
             return value.Trim();
+        }
+
+        /// <summary>Сравнение гос. номеров без пробелов и дефисов.</summary>
+        public static bool SamePlate(string left, string right)
+        {
+            return string.Equals(NormalizePlate(left), NormalizePlate(right), StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        /// <summary>Гос. номер без пробелов и дефисов, в верхнем регистре.</summary>
+        public static string NormalizePlate(string plate)
+        {
+            if (string.IsNullOrWhiteSpace(plate))
+                return string.Empty;
+
+            return new string(plate.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
         }
 
         private static bool Contains(string source, string part)

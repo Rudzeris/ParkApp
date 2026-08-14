@@ -251,14 +251,15 @@ namespace ParkApp.components.Infrastructure.Excel
                 return;
 
             var reference = ColumnName(columnIndex) + rowNumber.ToString(CultureInfo.InvariantCulture);
-            var style = styleOverride ?? StyleFor(cell.Kind);
+            var style = styleOverride ?? (cell.Kind == XlsxCellKind.Raw ? cell.Style : StyleFor(cell.Kind));
+            var asText = cell.Kind == XlsxCellKind.Text || (cell.Kind == XlsxCellKind.Raw && cell.IsText);
 
             builder.Append("<c r=\"").Append(reference).Append("\"");
 
             if (style != 0)
                 builder.Append(" s=\"").Append(style).Append("\"");
 
-            if (cell.Kind == XlsxCellKind.Text)
+            if (asText)
             {
                 builder.Append(" t=\"inlineStr\"><is><t xml:space=\"preserve\">")
                        .Append(Escape(cell.Value))

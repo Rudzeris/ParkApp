@@ -11,9 +11,11 @@ using ParkApp.components.Domain;
 namespace ParkApp.components.ViewModel
 {
     /// <summary>
-    /// Редактор штрафа. Ошибки показываются списком при сохранении:
-    /// часть правил межполевые (дата нарушения ≤ даты постановления),
-    /// поштучно их не проверить.
+    /// Запись книги постановлений. Поля повторяют столбцы книги.
+    ///
+    /// Марка и ГРЗ — обычный текст: в книгу пишут то, что напечатано
+    /// в постановлении. Кнопка «Из реестра» подставляет их из карточки машины,
+    /// чтобы не набирать руками, но не запрещает вписать своё.
     /// </summary>
     public class FineEditViewModel : ViewModelBase
     {
@@ -26,11 +28,14 @@ namespace ParkApp.components.ViewModel
         private string _resolutionNumber;
         private DateTime? _resolutionDate;
         private DateTime? _violationDate;
-        private string _violationPlace;
-        private PersonOption _selectedDriver;
+        private string _offenderName;
+        private string _carBrand;
+        private string _carPlate;
         private string _amountText;
         private bool _isPaid;
         private DateTime? _paidDate;
+        private string _paymentReference;
+        private string _notes;
         private CarOption _selectedCar;
         private string _scanPath;
 
@@ -39,7 +44,6 @@ namespace ParkApp.components.ViewModel
             IScanStorage scans,
             IFileDialogService fileDialogs,
             IEnumerable<Car> cars,
-            IEnumerable<Person> people,
             Fine fine,
             bool isNew)
         {
@@ -50,27 +54,27 @@ namespace ParkApp.components.ViewModel
             _isNew = isNew;
 
             Cars = new ObservableCollection<CarOption>();
-            Drivers = new ObservableCollection<PersonOption>();
             Errors = new ObservableCollection<string>();
 
             foreach (var car in cars ?? Enumerable.Empty<Car>())
                 Cars.Add(CarOption.ForCar(car));
 
-            Drivers.Add(new PersonOption(null, "— не установлен —"));
-            foreach (var person in people ?? Enumerable.Empty<Person>())
-                Drivers.Add(PersonOption.ForPerson(person));
-
             _resolutionNumber = fine.ResolutionNumber;
             _resolutionDate = fine.ResolutionDate == default(DateTime) ? (DateTime?)null : fine.ResolutionDate;
             _violationDate = fine.ViolationDate == default(DateTime) ? (DateTime?)null : fine.ViolationDate;
-            _violationPlace = fine.ViolationPlace;
-            _selectedDriver = Drivers.FirstOrDefault(d => d.Id == fine.DriverId) ?? Drivers[0];
+            _offenderName = fine.OffenderName;
+            _carBrand = fine.CarBrand;
+            _carPlate = fine.CarPlate;
             _amountText = fine.Amount > 0m ? fine.Amount.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
             _isPaid = fine.IsPaid;
             _paidDate = fine.PaidDate;
+            _paymentReference = fine.PaymentReference;
+            _notes = fine.Notes;
             _scanPath = fine.ScanPath;
-            _selectedCar = Cars.FirstOrDefault(c => string.Equals(c.Vin, fine.CarVin, StringComparison.OrdinalIgnoreCase));
 
+            _selectedCar = Cars.FirstOrDefault(c => FineService.SamePlate(c.Plate, fine.CarPlate));
+
+            UseRegistryCarCommand = new RelayCommand(o => UseRegistryCar(), o => SelectedCar != null);
             AttachScanCommand = new RelayCommand(o => AttachScan());
             OpenScanCommand = new RelayCommand(o => OpenScan(), o => HasScan);
             RemoveScanCommand = new RelayCommand(o => RemoveScan(), o => HasScan);
@@ -78,13 +82,13 @@ namespace ParkApp.components.ViewModel
             CancelCommand = new RelayCommand(o => Close(false));
         }
 
-        /// <summary>Закрыть окно. true — штраф сохранён.</summary>
+        /// <summary>Закрыть окно. true — запись сохранена.</summary>
         public event EventHandler<bool> RequestClose;
 
         public ObservableCollection<CarOption> Cars { get; private set; }
-        public ObservableCollection<PersonOption> Drivers { get; private set; }
         public ObservableCollection<string> Errors { get; private set; }
 
+        public ICommand UseRegistryCarCommand { get; private set; }
         public ICommand AttachScanCommand { get; private set; }
         public ICommand OpenScanCommand { get; private set; }
         public ICommand RemoveScanCommand { get; private set; }
@@ -93,10 +97,10 @@ namespace ParkApp.components.ViewModel
 
         public string Title
         {
-            get { return _isNew ? "Новый штраф" : "Штраф № " + _fine.ResolutionNumber; }
+            get { return _isNew ? "Новая запись книги постановлений" : "Постановление № " + _fine.ResolutionNumber; }
         }
 
-        /// <summary>Номер постановления — ключ записи, у существующего штрафа не меняется.</summary>
+        /// <summary>Номер постановления — ключ записи, у сохранённой не меняется.</summary>
         public bool CanEditNumber
         {
             get { return _isNew; }
@@ -108,6 +112,7 @@ namespace ParkApp.components.ViewModel
             set { SetProperty(ref _resolutionNumber, value); }
         }
 
+        /// <summary>Дата привлечения.</summary>
         public DateTime? ResolutionDate
         {
             get { return _resolutionDate; }
@@ -120,16 +125,22 @@ namespace ParkApp.components.ViewModel
             set { SetProperty(ref _violationDate, value); }
         }
 
-        public string ViolationPlace
+        public string OffenderName
         {
-            get { return _violationPlace; }
-            set { SetProperty(ref _violationPlace, value); }
+            get { return _offenderName; }
+            set { SetProperty(ref _offenderName, value); }
         }
 
-        public PersonOption SelectedDriver
+        public string CarBrand
         {
-            get { return _selectedDriver; }
-            set { SetProperty(ref _selectedDriver, value); }
+            get { return _carBrand; }
+            set { SetProperty(ref _carBrand, value); }
+        }
+
+        public string CarPlate
+        {
+            get { return _carPlate; }
+            set { SetProperty(ref _carPlate, value); }
         }
 
         public string AmountText
@@ -159,6 +170,24 @@ namespace ParkApp.components.ViewModel
             }
         }
 
+        /// <summary>ИД платежа или номер чека.</summary>
+        public string PaymentReference
+        {
+            get { return _paymentReference; }
+            set
+            {
+                if (SetProperty(ref _paymentReference, value) && !string.IsNullOrWhiteSpace(value))
+                    IsPaid = true;
+            }
+        }
+
+        public string Notes
+        {
+            get { return _notes; }
+            set { SetProperty(ref _notes, value); }
+        }
+
+        /// <summary>Машина из реестра — только для подстановки марки и номера.</summary>
         public CarOption SelectedCar
         {
             get { return _selectedCar; }
@@ -191,6 +220,22 @@ namespace ParkApp.components.ViewModel
         public bool HasErrors
         {
             get { return Errors.Count > 0; }
+        }
+
+        private void UseRegistryCar()
+        {
+            if (SelectedCar == null)
+                return;
+
+            if (!string.IsNullOrWhiteSpace(SelectedCar.Plate))
+                CarPlate = SelectedCar.Plate;
+
+            var car = SelectedCar;
+            var brand = car.Display;
+
+            // в списке строка вида «УАЗ-3163 · 0123АВ · VIN»; в книгу нужна только марка
+            var separator = brand.IndexOf('·');
+            CarBrand = separator > 0 ? brand.Substring(0, separator).Trim() : brand;
         }
 
         private void AttachScan()
@@ -256,19 +301,22 @@ namespace ParkApp.components.ViewModel
                 decimal amount;
                 var amountParsed = TryParseAmount(AmountText, out amount);
                 if (!amountParsed)
-                    problems.Add("Сумма штрафа указана неверно. Пример: 1500 или 1500,50");
+                    problems.Add("Сумма штрафа указана неверно. Пример: 800 или 1500,50");
 
                 var candidate = new Fine
                 {
+                    RowNumber = _fine.RowNumber,
                     ResolutionNumber = ResolutionNumber,
                     ResolutionDate = ResolutionDate ?? default(DateTime),
                     ViolationDate = ViolationDate ?? default(DateTime),
-                    ViolationPlace = ViolationPlace,
-                    CarVin = SelectedCar != null ? SelectedCar.Vin : null,
-                    DriverId = SelectedDriver != null ? SelectedDriver.Id : null,
+                    OffenderName = OffenderName,
+                    CarBrand = CarBrand,
+                    CarPlate = CarPlate,
                     Amount = amount,
-                    IsPaid = IsPaid,
                     PaidDate = PaidDate,
+                    PaymentReference = PaymentReference,
+                    PaymentText = BuildPaymentText(),
+                    Notes = Notes,
                     ScanPath = ScanPath
                 };
 
@@ -300,6 +348,18 @@ namespace ParkApp.components.ViewModel
             }
         }
 
+        /// <summary>
+        /// Пока оплату не трогали, в книгу возвращается исходная формулировка:
+        /// переписывать чужую запись своим шаблоном незачем.
+        /// </summary>
+        private string BuildPaymentText()
+        {
+            if (PaymentTextParser.SameAs(_fine.PaymentText, IsPaid, PaidDate, PaymentReference))
+                return _fine.PaymentText;
+
+            return PaymentTextParser.Format(IsPaid, PaidDate, PaymentReference);
+        }
+
         private void ShowErrors(IEnumerable<string> problems)
         {
             Errors.Clear();
@@ -324,13 +384,12 @@ namespace ParkApp.components.ViewModel
             if (string.IsNullOrWhiteSpace(text))
                 return false;
 
-            var normalized = text.Trim().Replace(" ", string.Empty).Replace(',', '.');
+            var normalized = new string(text
+                .Replace(',', '.')
+                .Where(c => char.IsDigit(c) || c == '.' || c == '-')
+                .ToArray());
 
-            return decimal.TryParse(
-                normalized,
-                NumberStyles.Number,
-                CultureInfo.InvariantCulture,
-                out amount);
+            return decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out amount);
         }
     }
 }

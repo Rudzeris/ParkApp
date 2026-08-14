@@ -116,9 +116,9 @@ namespace ParkApp.components.Infrastructure.Excel
             }
         }
 
-        private static List<string[]> ReadRows(XDocument document, IList<string> sharedStrings)
+        private static List<RawCell[]> ReadRows(XDocument document, IList<string> sharedStrings)
         {
-            var rows = new List<string[]>();
+            var rows = new List<RawCell[]>();
 
             if (document.Root == null)
                 return rows;
@@ -129,7 +129,7 @@ namespace ParkApp.components.Infrastructure.Excel
 
             foreach (var rowElement in sheetData.Elements(Main + "row"))
             {
-                var values = new Dictionary<int, string>();
+                var values = new Dictionary<int, RawCell>();
                 var maxIndex = -1;
                 var nextIndex = 0;
 
@@ -143,7 +143,7 @@ namespace ParkApp.components.Infrastructure.Excel
                     nextIndex = index + 1;
 
                     var value = CellValue(cellElement, sharedStrings);
-                    if (string.IsNullOrEmpty(value))
+                    if (value == null || string.IsNullOrEmpty(value.Value))
                         continue;
 
                     values[index] = value;
@@ -151,7 +151,7 @@ namespace ParkApp.components.Infrastructure.Excel
                         maxIndex = index;
                 }
 
-                var row = new string[maxIndex + 1];
+                var row = new RawCell[maxIndex + 1];
                 foreach (var pair in values)
                     row[pair.Key] = pair.Value;
 
@@ -161,16 +161,21 @@ namespace ParkApp.components.Infrastructure.Excel
             return rows;
         }
 
-        private static string CellValue(XElement cell, IList<string> sharedStrings)
+        private static RawCell CellValue(XElement cell, IList<string> sharedStrings)
         {
             var type = (string)cell.Attribute("t");
+            var style = 0;
+            int parsedStyle;
+            if (int.TryParse((string)cell.Attribute("s"), NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedStyle))
+                style = parsedStyle;
 
             if (type == "inlineStr")
             {
                 var inline = cell.Element(Main + "is");
-                return inline == null
-                    ? null
-                    : string.Concat(inline.Descendants(Main + "t").Select(t => t.Value));
+                if (inline == null)
+                    return null;
+
+                return new RawCell(string.Concat(inline.Descendants(Main + "t").Select(t => t.Value)), true, style);
             }
 
             var valueElement = cell.Element(Main + "v");
@@ -184,15 +189,16 @@ namespace ParkApp.components.Infrastructure.Excel
                 int index;
                 if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out index)
                     && index >= 0 && index < sharedStrings.Count)
-                    return sharedStrings[index];
+                    return new RawCell(sharedStrings[index], true, style);
 
                 return null;
             }
 
             if (type == "b")
-                return raw == "1" ? "ИСТИНА" : "ЛОЖЬ";
+                return new RawCell(raw == "1" ? "ИСТИНА" : "ЛОЖЬ", true, style);
 
-            return raw;
+            // числа и даты: дата отличается от числа только стилем, поэтому его и храним
+            return new RawCell(raw, type == "str" || type == "e", style);
         }
 
         private static List<string> ReadSharedStrings(ZipArchive archive)

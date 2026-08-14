@@ -69,7 +69,7 @@ namespace ParkApp
 
         public static FineListViewModel CreateFineListViewModel()
         {
-            return new FineListViewModel(Fines, Cars, People, Scans, FineDialogs, FileDialogs);
+            return new FineListViewModel(Fines, Cars, Scans, FineDialogs, FileDialogs);
         }
 
         public static SettingsViewModel CreateSettingsViewModel()

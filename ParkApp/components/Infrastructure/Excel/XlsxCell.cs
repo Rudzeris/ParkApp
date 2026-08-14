@@ -9,7 +9,10 @@ namespace ParkApp.components.Infrastructure.Excel
         Text,
         Number,
         Money,
-        Date
+        Date,
+
+        /// <summary>Значение и оформление берутся из исходного файла как есть.</summary>
+        Raw
     }
 
     /// <summary>
@@ -21,14 +24,33 @@ namespace ParkApp.components.Infrastructure.Excel
         /// <summary>Excel считает дни от 30.12.1899 (с учётом его же ошибки с 1900 годом).</summary>
         private static readonly DateTime SerialEpoch = new DateTime(1899, 12, 30);
 
-        private XlsxCell(string value, XlsxCellKind kind)
+        private XlsxCell(string value, XlsxCellKind kind, bool isText = false, int style = 0)
         {
             Value = value;
             Kind = kind;
+            IsText = isText;
+            Style = style;
         }
 
         public string Value { get; private set; }
         public XlsxCellKind Kind { get; private set; }
+
+        /// <summary>Для Raw: строка это или число.</summary>
+        public bool IsText { get; private set; }
+
+        /// <summary>Для Raw: индекс стиля из исходного файла — им держится формат даты.</summary>
+        public int Style { get; private set; }
+
+        /// <summary>
+        /// Ячейка чужого столбца: приложение её не понимает, но обязано вернуть
+        /// на место в том же виде — иначе дата в ней превратится в число.
+        /// </summary>
+        public static XlsxCell Raw(string value, bool isText, int style)
+        {
+            return string.IsNullOrEmpty(value)
+                ? Empty
+                : new XlsxCell(value, XlsxCellKind.Raw, isText, style);
+        }
 
         public static readonly XlsxCell Empty = new XlsxCell(null, XlsxCellKind.Empty);
 
