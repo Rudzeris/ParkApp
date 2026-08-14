@@ -54,6 +54,22 @@ namespace ParkApp.components.ViewModel
             }
         }
 
+        public bool IsPaid { get { return Fine.IsPaid; } }
+
+        /// <summary>«оплачен 12.08.2026», «оплачен» или «не оплачен».</summary>
+        public string PaidText
+        {
+            get
+            {
+                if (!Fine.IsPaid)
+                    return "не оплачен";
+
+                return Fine.PaidDate.HasValue
+                    ? string.Format("оплачен {0:dd.MM.yyyy}", Fine.PaidDate.Value)
+                    : "оплачен";
+            }
+        }
+
         /// <summary>Отметка о вложенном скане постановления.</summary>
         public string ScanMark { get { return HasScan ? "есть" : "—"; } }
     }

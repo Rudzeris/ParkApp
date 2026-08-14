@@ -46,6 +46,12 @@
                     <TextBlock Text="по:" VerticalAlignment="Center" Margin="16,0,6,0" />
                     <DatePicker Width="130" SelectedDate="{Binding DateTo}" />
 
+                    <TextBlock Text="Оплата:" VerticalAlignment="Center" Margin="16,0,6,0" />
+                    <ComboBox Width="150"
+                              ItemsSource="{Binding PaymentOptions}"
+                              DisplayMemberPath="Display"
+                              SelectedItem="{Binding SelectedPaymentOption}" />
+
                     <Button Content="Сбросить отбор"
                             Command="{Binding ResetFilterCommand}"
                             Margin="16,0,0,0" Padding="10,2" />
@@ -64,6 +70,14 @@
                     <TextBlock Text="Итого: " FontWeight="Bold" />
                     <TextBlock Text="{Binding Total, StringFormat={}{0:N2}}" FontWeight="Bold" />
                     <TextBlock Text=" руб." FontWeight="Bold" />
+                </StackPanel>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Не оплачено: " Foreground="#C0392B" />
+                    <TextBlock Text="{Binding UnpaidTotal, StringFormat={}{0:N2}}" Foreground="#C0392B" FontWeight="Bold" />
+                    <TextBlock Text=" руб." Foreground="#C0392B" />
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
@@ -98,6 +112,8 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
+                    <GridViewColumn Header="Оплата" Width="140"
+                                    DisplayMemberBinding="{Binding PaidText}" />
                     <GridViewColumn Header="Скан" Width="60"
                                     DisplayMemberBinding="{Binding ScanMark}" />
                 </GridView>

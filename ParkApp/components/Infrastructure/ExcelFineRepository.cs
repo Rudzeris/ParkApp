@@ -28,6 +28,8 @@ namespace ParkApp.components.Infrastructure
             "Водитель (№ из таблицы Люди)",
             "Место нарушения",
             "Сумма, руб.",
+            "Оплачен",
+            "Дата оплаты",
             "Скан постановления"
         };
 
@@ -125,6 +127,8 @@ namespace ParkApp.components.Infrastructure
             var driverColumn = sheet.Column("Водитель (№ из таблицы Люди)", "Водитель", "Водитель №");
             var placeColumn = sheet.Column("Место нарушения", "Место");
             var amountColumn = sheet.Column("Сумма, руб.", "Сумма");
+            var paidColumn = sheet.Column("Оплачен", "Оплата");
+            var paidDateColumn = sheet.Column("Дата оплаты");
             var scanColumn = sheet.Column("Скан постановления", "Скан", "Файл");
 
             var fines = new List<Fine>();
@@ -146,6 +150,8 @@ namespace ParkApp.components.Infrastructure
                     DriverId = SheetTable.GetInt(row, driverColumn),
                     ViolationPlace = SheetTable.GetString(row, placeColumn),
                     Amount = SheetTable.GetDecimal(row, amountColumn) ?? 0m,
+                    IsPaid = ParsePaid(row, paidColumn, paidDateColumn),
+                    PaidDate = SheetTable.GetDate(row, paidDateColumn),
                     ScanPath = SheetTable.GetString(row, scanColumn)
                 });
             }
@@ -167,11 +173,26 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Number(f.DriverId),
                     XlsxCell.Text(f.ViolationPlace),
                     XlsxCell.Money(f.Amount),
+                    XlsxCell.Text(f.IsPaid ? "да" : "нет"),
+                    XlsxCell.Date(f.PaidDate),
                     XlsxCell.Text(f.ScanPath)
                 })
                 .ToList();
 
             XlsxWriter.Write(AppPaths.FinesFile, SheetName, Headers, rows);
+        }
+
+        /// <summary>
+        /// Оплачен ли штраф. Заполненная дата оплаты сама по себе означает «да»,
+        /// даже если отметку в столбце «Оплачен» поставить забыли.
+        /// </summary>
+        private static bool ParsePaid(string[] row, int paidColumn, int paidDateColumn)
+        {
+            var flag = SheetTable.GetYesNo(row, paidColumn);
+            if (flag.HasValue)
+                return flag.Value;
+
+            return SheetTable.GetDate(row, paidDateColumn).HasValue;
         }
 
         private static bool SameNumber(string left, string right)
@@ -197,7 +218,9 @@ namespace ParkApp.components.Infrastructure
                     ViolationPlace = "г. Казань, пр. Победы, 12",
                     CarVin = "XTT316300E0012345",
                     DriverId = 2,
-                    Amount = 500m
+                    Amount = 500m,
+                    IsPaid = true,
+                    PaidDate = today.AddDays(-18)
                 },
                 new Fine
                 {

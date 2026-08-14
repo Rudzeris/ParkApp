@@ -33,8 +33,10 @@ namespace ParkApp.components.ViewModel
         private DateTime? _dateFrom;
         private DateTime? _dateTo;
         private string _textFilter;
+        private PaymentFilterOption _selectedPaymentOption;
         private FineRowViewModel _selectedFine;
         private decimal _total;
+        private decimal _unpaidTotal;
         private string _status;
 
         public FineListViewModel(
@@ -56,6 +58,14 @@ namespace ParkApp.components.ViewModel
             CarOptions = new ObservableCollection<CarOption>();
             DriverOptions = new ObservableCollection<PersonOption>();
 
+            PaymentOptions = new ObservableCollection<PaymentFilterOption>
+            {
+                new PaymentFilterOption("— все —", null),
+                new PaymentFilterOption("не оплаченные", false),
+                new PaymentFilterOption("оплаченные", true)
+            };
+            _selectedPaymentOption = PaymentOptions[0];
+
             AddCommand = new RelayCommand(o => Add());
             EditCommand = new RelayCommand(o => Edit(), o => SelectedFine != null);
             DeleteCommand = new RelayCommand(o => Delete(), o => SelectedFine != null);
@@ -67,6 +77,7 @@ namespace ParkApp.components.ViewModel
         public ObservableCollection<FineRowViewModel> Fines { get; private set; }
         public ObservableCollection<CarOption> CarOptions { get; private set; }
         public ObservableCollection<PersonOption> DriverOptions { get; private set; }
+        public ObservableCollection<PaymentFilterOption> PaymentOptions { get; private set; }
 
         public ICommand AddCommand { get; private set; }
         public ICommand EditCommand { get; private set; }
@@ -85,6 +96,12 @@ namespace ParkApp.components.ViewModel
         {
             get { return _selectedDriverOption; }
             set { if (SetProperty(ref _selectedDriverOption, value)) Reload(); }
+        }
+
+        public PaymentFilterOption SelectedPaymentOption
+        {
+            get { return _selectedPaymentOption; }
+            set { if (SetProperty(ref _selectedPaymentOption, value)) Reload(); }
         }
 
         public DateTime? DateFrom
@@ -116,6 +133,13 @@ namespace ParkApp.components.ViewModel
         {
             get { return _total; }
             private set { SetProperty(ref _total, value); }
+        }
+
+        /// <summary>Сколько из отобранного ещё не оплачено.</summary>
+        public decimal UnpaidTotal
+        {
+            get { return _unpaidTotal; }
+            private set { SetProperty(ref _unpaidTotal, value); }
         }
 
         public string Status
@@ -208,7 +232,8 @@ namespace ParkApp.components.ViewModel
                     DriverId = _selectedDriverOption != null ? _selectedDriverOption.Id : null,
                     From = DateFrom,
                     To = DateTo,
-                    Text = TextFilter
+                    Text = TextFilter,
+                    IsPaid = _selectedPaymentOption != null ? _selectedPaymentOption.IsPaid : null
                 };
 
                 var found = await _fines.FindAsync(filter);
@@ -232,6 +257,7 @@ namespace ParkApp.components.ViewModel
                     SelectedFine = Fines.FirstOrDefault(r => r.ResolutionNumber == selectedNumber);
 
                 Total = _fines.GetTotal(found);
+                UnpaidTotal = _fines.GetUnpaidTotal(found);
                 Status = string.Format("Записей: {0}", found.Count);
             }
             catch (Exception ex)
@@ -244,12 +270,14 @@ namespace ParkApp.components.ViewModel
         {
             _selectedCarOption = CarOptions.Count > 0 ? CarOptions[0] : null;
             _selectedDriverOption = DriverOptions.Count > 0 ? DriverOptions[0] : null;
+            _selectedPaymentOption = PaymentOptions.Count > 0 ? PaymentOptions[0] : null;
             _dateFrom = null;
             _dateTo = null;
             _textFilter = null;
 
             OnPropertyChanged("SelectedCarOption");
             OnPropertyChanged("SelectedDriverOption");
+            OnPropertyChanged("SelectedPaymentOption");
             OnPropertyChanged("DateFrom");
             OnPropertyChanged("DateTo");
             OnPropertyChanged("TextFilter");
@@ -343,6 +371,8 @@ namespace ParkApp.components.ViewModel
                 ResolutionDate = source.ResolutionDate,
                 ViolationDate = source.ViolationDate,
                 ViolationPlace = source.ViolationPlace,
+                IsPaid = source.IsPaid,
+                PaidDate = source.PaidDate,
                 CarVin = source.CarVin,
                 DriverId = source.DriverId,
                 Amount = source.Amount,

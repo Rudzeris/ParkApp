@@ -29,6 +29,8 @@ namespace ParkApp.components.ViewModel
         private string _violationPlace;
         private PersonOption _selectedDriver;
         private string _amountText;
+        private bool _isPaid;
+        private DateTime? _paidDate;
         private CarOption _selectedCar;
         private string _scanPath;
 
@@ -64,6 +66,8 @@ namespace ParkApp.components.ViewModel
             _violationPlace = fine.ViolationPlace;
             _selectedDriver = Drivers.FirstOrDefault(d => d.Id == fine.DriverId) ?? Drivers[0];
             _amountText = fine.Amount > 0m ? fine.Amount.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
+            _isPaid = fine.IsPaid;
+            _paidDate = fine.PaidDate;
             _scanPath = fine.ScanPath;
             _selectedCar = Cars.FirstOrDefault(c => string.Equals(c.Vin, fine.CarVin, StringComparison.OrdinalIgnoreCase));
 
@@ -132,6 +136,27 @@ namespace ParkApp.components.ViewModel
         {
             get { return _amountText; }
             set { SetProperty(ref _amountText, value); }
+        }
+
+        public bool IsPaid
+        {
+            get { return _isPaid; }
+            set { SetProperty(ref _isPaid, value); }
+        }
+
+        /// <summary>Дата оплаты. Может остаться пустой у оплаченного штрафа.</summary>
+        public DateTime? PaidDate
+        {
+            get { return _paidDate; }
+            set
+            {
+                if (!SetProperty(ref _paidDate, value))
+                    return;
+
+                // указали дату — значит оплачен; отдельно ставить галку не нужно
+                if (value.HasValue)
+                    IsPaid = true;
+            }
         }
 
         public CarOption SelectedCar
@@ -242,6 +267,8 @@ namespace ParkApp.components.ViewModel
                     CarVin = SelectedCar != null ? SelectedCar.Vin : null,
                     DriverId = SelectedDriver != null ? SelectedDriver.Id : null,
                     Amount = amount,
+                    IsPaid = IsPaid,
+                    PaidDate = PaidDate,
                     ScanPath = ScanPath
                 };
 

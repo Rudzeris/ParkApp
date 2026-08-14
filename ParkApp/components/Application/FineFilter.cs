@@ -21,5 +21,8 @@ namespace ParkApp.components.Application
 
         /// <summary>Поиск по номеру постановления и месту нарушения.</summary>
         public string Text { get; set; }
+
+        /// <summary>Оплата: true — оплаченные, false — неоплаченные, null — все.</summary>
+        public bool? IsPaid { get; set; }
     }
 }

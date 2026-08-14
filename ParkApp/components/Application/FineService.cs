@@ -45,6 +45,9 @@ namespace ParkApp.components.Application
                     query = query.Where(f => f.ViolationDate.Date <= to);
                 }
 
+                if (filter.IsPaid.HasValue)
+                    query = query.Where(f => f.IsPaid == filter.IsPaid.Value);
+
                 if (!string.IsNullOrWhiteSpace(filter.Text))
                     query = query.Where(f => Contains(f.ResolutionNumber, filter.Text)
                                              || Contains(f.ViolationPlace, filter.Text));
@@ -60,6 +63,12 @@ namespace ParkApp.components.Application
 
         /// <summary>Итоговая сумма по набору штрафов.</summary>
         public decimal GetTotal(IEnumerable<Fine> fines) => fines == null ? 0m : fines.Sum(f => f.Amount);
+
+        /// <summary>Сколько из этих штрафов ещё не оплачено — главный вопрос к реестру.</summary>
+        public decimal GetUnpaidTotal(IEnumerable<Fine> fines)
+        {
+            return fines == null ? 0m : fines.Where(f => !f.IsPaid).Sum(f => f.Amount);
+        }
 
         /// <summary>
         /// Проверяет штраф. Пустой список — ошибок нет.
@@ -110,6 +119,15 @@ namespace ParkApp.components.Application
             if (fine.Amount <= 0m)
                 errors.Add("Сумма штрафа должна быть больше нуля.");
 
+            if (fine.PaidDate.HasValue)
+            {
+                if (fine.PaidDate.Value.Date > today)
+                    errors.Add("Дата оплаты не может быть в будущем.");
+
+                if (fine.ResolutionDate != empty && fine.PaidDate.Value.Date < fine.ResolutionDate.Date)
+                    errors.Add("Дата оплаты не может быть раньше даты постановления.");
+            }
+
             return errors;
         }
 
@@ -143,6 +161,14 @@ namespace ParkApp.components.Application
             fine.CarVin = (fine.CarVin ?? string.Empty).Trim();
             fine.ResolutionDate = fine.ResolutionDate.Date;
             fine.ViolationDate = fine.ViolationDate.Date;
+
+            if (fine.PaidDate.HasValue)
+            {
+                fine.PaidDate = fine.PaidDate.Value.Date;
+
+                // дата оплаты сама по себе означает, что штраф оплачен
+                fine.IsPaid = true;
+            }
         }
 
         private static string Trim(string value)

@@ -147,6 +147,7 @@
         <Compile Include="components\ViewModel\IFineDialogService.cs" />
         <Compile Include="components\ViewModel\IMainDialogService.cs" />
         <Compile Include="components\ViewModel\MainViewModel.cs" />
+        <Compile Include="components\ViewModel\PaymentFilterOption.cs" />
         <Compile Include="components\ViewModel\PersonOption.cs" />
         <Compile Include="components\ViewModel\RelayCommand.cs" />
         <Compile Include="components\ViewModel\SettingsViewModel.cs" />

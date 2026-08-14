@@ -32,6 +32,15 @@ namespace ParkApp.components.Domain
         /// <summary>Сумма штрафа, руб.</summary>
         public decimal Amount { get; set; }
 
+        /// <summary>Штраф оплачен.</summary>
+        public bool IsPaid { get; set; }
+
+        /// <summary>
+        /// Дата оплаты. Может быть пустой и у оплаченного штрафа:
+        /// отметку иногда ставят задним числом, не помня дня.
+        /// </summary>
+        public DateTime? PaidDate { get; set; }
+
         /// <summary>Относительный путь к скану постановления внутри каталога данных.</summary>
         public string ScanPath { get; set; }
     }
