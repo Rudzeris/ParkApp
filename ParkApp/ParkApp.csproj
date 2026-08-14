@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
             Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
@@ -90,15 +90,18 @@
         <Compile Include="components\Application\FineFilter.cs" />
         <Compile Include="components\Application\FineService.cs" />
         <Compile Include="components\Application\ICarRepository.cs" />
+        <Compile Include="components\Application\IPersonRepository.cs" />
         <Compile Include="components\Application\IFileDialogService.cs" />
         <Compile Include="components\Application\IFineRepository.cs" />
         <Compile Include="components\Application\IScanStorage.cs" />
+        <Compile Include="components\Application\PersonService.cs" />
         <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Domain\Car.cs" />
         <Compile Include="components\Domain\CarNumber.cs" />
         <Compile Include="components\Domain\Fine.cs" />
         <Compile Include="components\Domain\Location.cs" />
         <Compile Include="components\Domain\NumberType.cs" />
+        <Compile Include="components\Domain\Person.cs" />
         <Compile Include="components\Infrastructure\AppPaths.cs" />
         <Compile Include="components\Infrastructure\Excel\SheetTable.cs" />
         <Compile Include="components\Infrastructure\Excel\XlsxCell.cs" />
@@ -106,8 +109,8 @@
         <Compile Include="components\Infrastructure\Excel\XlsxWriter.cs" />
         <Compile Include="components\Infrastructure\ExcelCarRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelFineRepository.cs" />
+        <Compile Include="components\Infrastructure\ExcelPersonRepository.cs" />
         <Compile Include="components\Infrastructure\FileScanStorage.cs" />
-        <Compile Include="components\Infrastructure\JsonCarRepository.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
         <Compile Include="components\View\FineEditWindow.xaml.cs">
             <DependentUpon>FineEditWindow.xaml</DependentUpon>
@@ -120,6 +123,7 @@
         <Compile Include="components\View\WpfFineDialogService.cs" />
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
         <Compile Include="components\ViewModel\CarOption.cs" />
+        <Compile Include="components\ViewModel\CarRowViewModel.cs" />
         <Compile Include="components\ViewModel\FineEditViewModel.cs" />
         <Compile Include="components\ViewModel\FineListViewModel.cs" />
         <Compile Include="components\ViewModel\FineRowViewModel.cs" />

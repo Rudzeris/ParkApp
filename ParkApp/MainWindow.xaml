@@ -5,7 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ParkApp"
         mc:Ignorable="d"
-        Title="Автопарк" Height="420" Width="700">
+        Title="Автопарк" Height="520" Width="1000">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
@@ -13,13 +18,22 @@
             </ToolBar>
         </ToolBarTray>
 
-        <ListView ItemsSource="{Binding Cars}">
+        <Border DockPanel.Dock="Top" Margin="6,6,6,0" Padding="8"
+                Background="#FDF3F2" BorderBrush="#C0392B" BorderThickness="1"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Error}" Foreground="#C0392B" TextWrapping="Wrap" />
+        </Border>
+
+        <ListView Margin="6" ItemsSource="{Binding Cars}">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Модель" Width="140" DisplayMemberBinding="{Binding Model}" />
-                    <GridViewColumn Header="VIN" Width="160" DisplayMemberBinding="{Binding Vin}" />
-                    <GridViewColumn Header="Год" Width="60" DisplayMemberBinding="{Binding Year}" />
-                    <GridViewColumn Header="Местонахождение" Width="150" DisplayMemberBinding="{Binding Location}" />
+                    <GridViewColumn Header="Марка" Width="150" DisplayMemberBinding="{Binding Model}" />
+                    <GridViewColumn Header="Гос. рег. знак" Width="160" DisplayMemberBinding="{Binding Plates}" />
+                    <GridViewColumn Header="VIN" Width="180" DisplayMemberBinding="{Binding Vin}" />
+                    <GridViewColumn Header="Год" Width="60" DisplayMemberBinding="{Binding YearText}" />
+                    <GridViewColumn Header="Местонахождение" Width="120" DisplayMemberBinding="{Binding LocationText}" />
+                    <GridViewColumn Header="Куда относится" Width="120" DisplayMemberBinding="{Binding Affiliation}" />
+                    <GridViewColumn Header="Должностное лицо" Width="200" DisplayMemberBinding="{Binding OfficialText}" />
                 </GridView>
             </ListView.View>
         </ListView>

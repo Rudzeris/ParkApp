@@ -195,8 +195,8 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = today.AddDays(-20),
                     ViolationDate = today.AddDays(-25),
                     ViolationPlace = "г. Казань, пр. Победы, 12",
-                    CarVin = "VIN1",
-                    DriverName = "Иванов И.И.",
+                    CarVin = "XTT316300E0012345",
+                    DriverName = "Петров Пётр Петрович",
                     Amount = 500m
                 },
                 new Fine
@@ -205,8 +205,8 @@ namespace ParkApp.components.Infrastructure
                     ResolutionDate = today.AddDays(-8),
                     ViolationDate = today.AddDays(-10),
                     ViolationPlace = "трасса М-7, 812 км",
-                    CarVin = "VIN2",
-                    DriverName = "Петров П.П.",
+                    CarVin = "X1F53500J0000123",
+                    DriverName = "Сидоров Сидор Сидорович",
                     Amount = 1500m
                 },
                 new Fine
@@ -214,7 +214,7 @@ namespace ParkApp.components.Infrastructure
                     ResolutionNumber = "18810516250409876543",
                     ResolutionDate = today.AddDays(-3),
                     ViolationDate = today.AddDays(-3),
-                    CarVin = "VIN2",
+                    CarVin = "X1F53500J0000123",
                     Amount = 800m
                 }
             };

@@ -13,6 +13,7 @@ namespace ParkApp
     public static class AppServices
     {
         public static CarService Cars { get; private set; }
+        public static PersonService People { get; private set; }
         public static FineService Fines { get; private set; }
         public static IScanStorage Scans { get; private set; }
         public static IFileDialogService FileDialogs { get; private set; }
@@ -23,9 +24,11 @@ namespace ParkApp
             // хранилище выбирается здесь и только здесь: замена Excel на БД —
             // это две строки ниже, остальные слои не меняются
             ICarRepository carRepository = new ExcelCarRepository();
+            IPersonRepository personRepository = new ExcelPersonRepository();
             IFineRepository fineRepository = new ExcelFineRepository();
 
             Cars = new CarService(carRepository);
+            People = new PersonService(personRepository);
             Fines = new FineService(fineRepository);
             Scans = new FileScanStorage();
             FileDialogs = new WpfFileDialogService();
@@ -34,7 +37,7 @@ namespace ParkApp
 
         public static CarListViewModel CreateCarListViewModel()
         {
-            return new CarListViewModel(Cars);
+            return new CarListViewModel(Cars, People);
         }
 
         public static FineListViewModel CreateFineListViewModel()

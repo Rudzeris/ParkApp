@@ -15,7 +15,7 @@ namespace ParkApp.components.ViewModel
             HasScan = hasScan;
 
             // ссылка может «повиснуть», если машину удалили — показываем это вместо падения
-            CarModel = car != null ? car.Model : "машина не найдена";
+            CarModel = car != null ? CarOption.ModelText(car) : "машина не найдена";
             CarPlates = car != null ? CarOption.Plates(car.Numbers) : fine.CarVin;
         }
 

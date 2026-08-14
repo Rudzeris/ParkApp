@@ -25,16 +25,36 @@ namespace ParkApp.components.ViewModel
             return new CarOption(car.Vin, Describe(car));
         }
 
-        /// <summary>«BMW · A4444EC, 5555CE · VIN2»</summary>
+        /// <summary>«УАЗ-3163 · 0123АВ, А123ВС16 · XTT316300E0012345»</summary>
         public static string Describe(Car car)
         {
             if (car == null)
                 return "машина не найдена";
 
+            var model = ModelText(car);
             var plates = Plates(car.Numbers);
+
             return plates.Length > 0
-                ? string.Format("{0} · {1} · {2}", car.Model, plates, car.Vin)
-                : string.Format("{0} · {1}", car.Model, car.Vin);
+                ? string.Format("{0} · {1} · {2}", model, plates, car.Vin)
+                : string.Format("{0} · {1}", model, car.Vin);
+        }
+
+        /// <summary>Марка машины; в таблице она может быть не заполнена.</summary>
+        public static string ModelText(Car car)
+        {
+            if (car == null || string.IsNullOrWhiteSpace(car.Model))
+                return "без марки";
+
+            return car.Model.Trim();
+        }
+
+        /// <summary>Местонахождение словами.</summary>
+        public static string LocationText(Location? location)
+        {
+            if (!location.HasValue)
+                return "—";
+
+            return location.Value == Domain.Location.Ppd ? "ППД" : "ВО";
         }
 
         /// <summary>Гос. номера через запятую.</summary>

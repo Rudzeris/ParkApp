@@ -123,7 +123,7 @@ namespace ParkApp.components.ViewModel
             try
             {
                 var cars = await _cars.GetAllAsync();
-                _allCars = cars.OrderBy(c => c.Model).ToList();
+                _allCars = cars.OrderBy(CarOption.ModelText).ToList();
 
                 _carsByVin = new Dictionary<string, Car>(StringComparer.OrdinalIgnoreCase);
                 foreach (var car in _allCars)
