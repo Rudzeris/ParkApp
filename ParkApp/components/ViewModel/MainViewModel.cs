@@ -81,8 +81,13 @@ namespace ParkApp.components.ViewModel
 
         private void OpenSettings()
         {
-            if (_dialogs.ShowSettings(_settingsViewModelFactory()))
-                RefreshSections();
+            if (!_dialogs.ShowSettings(_settingsViewModelFactory()))
+                return;
+
+            RefreshSections();
+
+            // пути к таблицам могли поменяться — перечитываем данные
+            Cars.Reload();
         }
     }
 }

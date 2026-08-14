@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using System.IO;
+using ParkApp.components.Application;
 
 namespace ParkApp.components.Infrastructure
 {
@@ -11,18 +12,15 @@ namespace ParkApp.components.Infrastructure
     /// ├── Машины/Машины.xlsx
     /// └── Люди/Люди.xlsx
     ///
-    /// &lt;свои документы&gt;/             DataRoot — у каждого своё
+    /// &lt;свои документы&gt;/             DataRoot — у каждого свои
     /// └── Штрафы/
     ///     ├── Штрафы.xlsx
     ///     └── Сканы/
     /// </code>
-    /// Оба корня задаются в App.config. Пустой DataRoot — каталог приложения,
-    /// пустой SharedRoot — тот же каталог, что и DataRoot.
     ///
-    /// Разделение нужно потому, что справочники (машины, люди) одинаковы у всех,
-    /// а документы каждый ведёт свои. Справочники можно положить на общую папку
-    /// и не рассылать копии: приложение их только читает, а параллельное чтение
-    /// одного файла безопасно.
+    /// Путь берётся в три шага: настройки приложения → App.config → значение по умолчанию.
+    /// Настройки читаются при каждом обращении, поэтому смена папки в окне настроек
+    /// действует сразу, без перезапуска.
     /// </summary>
     public static class AppPaths
     {
@@ -37,31 +35,75 @@ namespace ParkApp.components.Infrastructure
         public const string PeopleFileName = "Люди.xlsx";
         public const string FinesFileName = "Штрафы.xlsx";
 
+        private static IAppSettings _settings;
+
+        /// <summary>Подключает настройки. Вызывается один раз при запуске.</summary>
+        public static void UseSettings(IAppSettings settings)
+        {
+            _settings = settings;
+        }
+
+        /// <summary>Каталог приложения. От него считаются относительные пути.</summary>
+        public static string AppFolder
+        {
+            get { return AppDomain.CurrentDomain.BaseDirectory; }
+        }
+
         /// <summary>Корень своих документов.</summary>
         public static string DataRoot
         {
-            get { return Resolve("DataRoot", AppDomain.CurrentDomain.BaseDirectory); }
+            get { return FromSettings(PathSetting.DataRoot) ?? FromConfig("DataRoot") ?? AppFolder; }
         }
 
         /// <summary>Корень общих справочников. По умолчанию совпадает с <see cref="DataRoot"/>.</summary>
         public static string SharedRoot
         {
-            get { return Resolve("SharedRoot", DataRoot); }
+            get { return FromSettings(PathSetting.SharedRoot) ?? FromConfig("SharedRoot") ?? DataRoot; }
         }
 
         public static string CarsFile
         {
-            get { return Path.Combine(SharedRoot, CarsFolderName, CarsFileName); }
+            get
+            {
+                return FromSettings(PathSetting.CarsFile)
+                       ?? Path.Combine(SharedRoot, CarsFolderName, CarsFileName);
+            }
         }
 
         public static string PeopleFile
         {
-            get { return Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName); }
+            get
+            {
+                return FromSettings(PathSetting.PeopleFile)
+                       ?? Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName);
+            }
         }
 
         public static string FinesFile
         {
-            get { return Path.Combine(DataRoot, FinesFolderName, FinesFileName); }
+            get
+            {
+                return FromSettings(PathSetting.FinesFile)
+                       ?? Path.Combine(DataRoot, FinesFolderName, FinesFileName);
+            }
+        }
+
+        /// <summary>Путь, который получится при пустой настройке — показывается в окне настроек.</summary>
+        public static string DefaultPath(PathSetting setting)
+        {
+            switch (setting)
+            {
+                case PathSetting.SharedRoot:
+                    return FromConfig("SharedRoot") ?? DataRoot;
+                case PathSetting.CarsFile:
+                    return Path.Combine(SharedRoot, CarsFolderName, CarsFileName);
+                case PathSetting.PeopleFile:
+                    return Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName);
+                case PathSetting.FinesFile:
+                    return Path.Combine(DataRoot, FinesFolderName, FinesFileName);
+                default:
+                    return FromConfig("DataRoot") ?? AppFolder;
+            }
         }
 
         /// <summary>Папка сканов раздела относительно корня документов, например «Штрафы\Сканы».</summary>
@@ -78,18 +120,26 @@ namespace ParkApp.components.Infrastructure
                 Directory.CreateDirectory(folder);
         }
 
-        /// <summary>Значение из App.config; относительный путь считается от каталога приложения.</summary>
-        private static string Resolve(string settingKey, string fallback)
+        private static string FromSettings(PathSetting setting)
         {
-            var configured = ConfigurationManager.AppSettings[settingKey];
+            if (_settings == null)
+                return null;
 
-            if (string.IsNullOrWhiteSpace(configured))
-                return fallback;
+            return MakeAbsolute(_settings.GetPath(setting));
+        }
 
-            configured = configured.Trim();
-            return Path.IsPathRooted(configured)
-                ? configured
-                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configured);
+        private static string FromConfig(string key)
+        {
+            return MakeAbsolute(ConfigurationManager.AppSettings[key]);
+        }
+
+        private static string MakeAbsolute(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            value = value.Trim();
+            return Path.IsPathRooted(value) ? value : Path.Combine(AppFolder, value);
         }
     }
 }
