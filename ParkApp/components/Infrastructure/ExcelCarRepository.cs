@@ -21,7 +21,11 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelCarRepository : ICarRepository
     {
-        public const string SheetName = "Машины";
+        /// <summary>Имя листа по умолчанию; пользователь может назначить своё в настройках.</summary>
+        public static string SheetName
+        {
+            get { return AppSheets.Name(SheetKind.Cars); }
+        }
 
         // имена столбцов вынесены сюда, потому что по ним же проверяется файл,
         // который пользователь выбирает в настройках
@@ -83,9 +87,24 @@ namespace ParkApp.components.Infrastructure
             var path = AppPaths.CarsFile;
 
             if (!File.Exists(path))
-                CreateDemoFile(path);
+            {
+                // путь указал пользователь, а файла нет: скорее всего его перенесли.
+                // Подсовывать вместо него образец нельзя — человек ждёт свои данные
+                if (AppPaths.IsConfigured(PathSetting.CarsFile) || AppPaths.IsConfigured(PathSetting.SharedRoot))
+                    throw new FileNotFoundException(string.Format(
+                        "Файл машин не найден:{0}{1}{0}{0}Проверьте путь в настройках — возможно, файл переместили.",
+                        Environment.NewLine, path));
 
-            var sheet = XlsxReader.Read(path, SheetName);
+                CreateDemoFile(path);
+            }
+
+            // строго по имени: имя листа настраивается, и молча прочитать
+            // вместо него первый лист книги было бы хуже, чем сказать об ошибке
+            var sheet = XlsxReader.ReadOrNull(path, SheetName);
+            if (sheet == null)
+                throw new InvalidOperationException(string.Format(
+                    "В файле «{0}» нет листа «{1}».{2}{2}Укажите имя листа в настройках.",
+                    Path.GetFileName(path), SheetName, Environment.NewLine));
 
             var vinColumn = sheet.Column(VinNames);
             if (vinColumn < 0)

@@ -16,7 +16,10 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelFineRepository : IFineRepository
     {
-        public const string SheetName = "Штрафы";
+        public static string SheetName
+        {
+            get { return AppSheets.Name(SheetKind.Fines); }
+        }
 
         public static readonly string[] NumberNames = { "№ постановления", "Номер постановления", "Постановление" };
         public static readonly string[] ResolutionDateNames = { "Дата постановления" };
@@ -115,12 +118,23 @@ namespace ParkApp.components.Infrastructure
 
             if (!File.Exists(path))
             {
+                if (AppPaths.IsConfigured(PathSetting.FinesFile) || AppPaths.IsConfigured(PathSetting.DataRoot))
+                    throw new FileNotFoundException(string.Format(
+                        "Файл штрафов не найден:{0}{1}{0}{0}Проверьте путь в настройках — возможно, файл переместили.",
+                        Environment.NewLine, path));
+
                 var seed = CreateSeed();
                 Save(seed);
                 return seed;
             }
 
-            var sheet = XlsxReader.Read(path, SheetName);
+            // строго по имени: имя листа настраивается, и молча прочитать
+            // вместо него первый лист книги было бы хуже, чем сказать об ошибке
+            var sheet = XlsxReader.ReadOrNull(path, SheetName);
+            if (sheet == null)
+                throw new InvalidOperationException(string.Format(
+                    "В файле «{0}» нет листа «{1}».{2}{2}Укажите имя листа в настройках.",
+                    Path.GetFileName(path), SheetName, Environment.NewLine));
 
             var numberColumn = sheet.Column(NumberNames);
             if (numberColumn < 0)

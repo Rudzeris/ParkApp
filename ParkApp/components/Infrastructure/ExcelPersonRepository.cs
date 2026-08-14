@@ -14,7 +14,10 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelPersonRepository : IPersonRepository
     {
-        public const string SheetName = "Люди";
+        public static string SheetName
+        {
+            get { return AppSheets.Name(SheetKind.People); }
+        }
 
         public static readonly string[] IdNames = { "№", "№ п/п", "Id", "Код" };
         public static readonly string[] FullNameNames = { "ФИО", "Ф.И.О.", "Фамилия, имя, отчество" };
@@ -37,9 +40,22 @@ namespace ParkApp.components.Infrastructure
             var path = AppPaths.PeopleFile;
 
             if (!File.Exists(path))
-                CreateDemoFile(path);
+            {
+                if (AppPaths.IsConfigured(PathSetting.PeopleFile) || AppPaths.IsConfigured(PathSetting.SharedRoot))
+                    throw new FileNotFoundException(string.Format(
+                        "Файл людей не найден:{0}{1}{0}{0}Проверьте путь в настройках — возможно, файл переместили.",
+                        Environment.NewLine, path));
 
-            var sheet = XlsxReader.Read(path, SheetName);
+                CreateDemoFile(path);
+            }
+
+            // строго по имени: имя листа настраивается, и молча прочитать
+            // вместо него первый лист книги было бы хуже, чем сказать об ошибке
+            var sheet = XlsxReader.ReadOrNull(path, SheetName);
+            if (sheet == null)
+                throw new InvalidOperationException(string.Format(
+                    "В файле «{0}» нет листа «{1}».{2}{2}Укажите имя листа в настройках.",
+                    Path.GetFileName(path), SheetName, Environment.NewLine));
 
             var idColumn = sheet.Column(IdNames);
             var positionColumn = sheet.Column(PositionNames);

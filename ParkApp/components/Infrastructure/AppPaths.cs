@@ -88,6 +88,16 @@ namespace ParkApp.components.Infrastructure
             }
         }
 
+        /// <summary>
+        /// Путь задан пользователем, а не выведен по умолчанию.
+        /// Для такого пути отсутствующий файл — ошибка: создавать вместо него
+        /// файл-образец нельзя, пользователь ждёт свои данные.
+        /// </summary>
+        public static bool IsConfigured(PathSetting setting)
+        {
+            return _settings != null && !string.IsNullOrWhiteSpace(_settings.GetPath(setting));
+        }
+
         /// <summary>Путь, который получится при пустой настройке — показывается в окне настроек.</summary>
         public static string DefaultPath(PathSetting setting)
         {

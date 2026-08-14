@@ -1,7 +1,7 @@
 <Window x:Class="ParkApp.components.View.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Настройки" Height="620" Width="760"
+        Title="Настройки" Height="700" Width="780"
         WindowStartupLocation="CenterOwner">
 
     <Window.InputBindings>
@@ -79,6 +79,18 @@
                                             <Run Text="{Binding Hint, Mode=OneWay}" />
                                         </TextBlock>
 
+                                        <DockPanel Margin="0,4,0,0"
+                                                   Visibility="{Binding HasSheet, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock DockPanel.Dock="Left" Text="Лист:" VerticalAlignment="Center"
+                                                       Margin="0,0,6,0" />
+                                            <Button DockPanel.Dock="Right" Content="Выбрать лист…" Width="130" Padding="0,2"
+                                                    Margin="6,0,0,0"
+                                                    Command="{Binding DataContext.PickSheetCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <TextBox Text="{Binding SheetName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </DockPanel>
+
                                         <TextBlock Text="{Binding Note}" Foreground="#B7950B" TextWrapping="Wrap"
                                                    Margin="0,3,0,0"
                                                    Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
@@ -90,6 +102,24 @@
 
                         <TextBlock TextWrapping="Wrap" Foreground="Gray" FontStyle="Italic"
                                    Text="Пути по умолчанию пересчитаются после сохранения." />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Справочные листы в файле машин" Padding="8" Margin="0,12,0,0">
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Списки значений лежат отдельными листами в файле машин: столбец A, в A1 «Название»." />
+                        <ItemsControl ItemsSource="{Binding Sheets}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Title}" Width="200"
+                                                   VerticalAlignment="Center" />
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </GroupBox>
 

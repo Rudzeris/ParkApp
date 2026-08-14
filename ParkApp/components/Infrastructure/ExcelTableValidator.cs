@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ParkApp.components.Application;
 using ParkApp.components.Infrastructure.Excel;
 
@@ -13,19 +14,27 @@ namespace ParkApp.components.Infrastructure
     /// </summary>
     public class ExcelTableValidator : ITableFileValidator
     {
-        public TableFileCheck Check(TableFileKind kind, string path)
+        public IReadOnlyList<string> GetSheetNames(string path)
+        {
+            return XlsxReader.SheetNames(path).ToList();
+        }
+
+        public TableFileCheck Check(TableFileKind kind, string path, string sheetName)
         {
             if (string.IsNullOrWhiteSpace(path))
-                return Invalid("Путь к файлу не указан.");
+                return Invalid("путь к файлу не указан");
 
             if (!File.Exists(path))
-                return Invalid("Файл не найден.");
+                return Invalid("файл не найден");
 
             var extension = (Path.GetExtension(path) ?? string.Empty).ToLowerInvariant();
             if (extension != ".xlsx")
-                return Invalid("Нужен файл .xlsx. Старый .xls откройте в Excel и сохраните как «Книга Excel (*.xlsx)».");
+                return Invalid("нужен файл .xlsx — старый .xls откройте в Excel и сохраните как «Книга Excel (*.xlsx)»");
 
-            var sheetName = SheetNameFor(kind);
+            if (string.IsNullOrWhiteSpace(sheetName))
+                sheetName = AppSheets.Name(SheetCatalog.ForTable(kind));
+
+            var available = XlsxReader.SheetNames(path).ToList();
 
             SheetTable sheet;
             try
@@ -34,14 +43,19 @@ namespace ParkApp.components.Infrastructure
             }
             catch (Exception ex)
             {
-                return Invalid("Файл не читается: " + ex.Message);
+                return Invalid("файл не читается: " + ex.Message);
             }
 
             if (sheet == null)
-                return Invalid(string.Format("В книге нет листа «{0}».", sheetName));
+            {
+                // поправимый случай: файл тот, а лист называется иначе
+                return new TableFileCheck(false,
+                    string.Format("в книге нет листа «{0}»", sheetName),
+                    null, true, available);
+            }
 
             if (sheet.Headers.Count == 0)
-                return Invalid(string.Format("Лист «{0}» пуст — не найдена строка заголовков.", sheetName));
+                return Invalid(string.Format("лист «{0}» пуст — не найдена строка заголовков", sheetName));
 
             return CheckColumns(kind, sheet);
         }
@@ -54,7 +68,7 @@ namespace ParkApp.components.Infrastructure
             {
                 case TableFileKind.People:
                     if (sheet.Column(ExcelPersonRepository.FullNameNames) < 0)
-                        return Invalid("Не найден обязательный столбец «ФИО».");
+                        return Invalid("не найден обязательный столбец «ФИО»");
 
                     Optional(sheet, missing, "№", ExcelPersonRepository.IdNames);
                     Optional(sheet, missing, "Должность", ExcelPersonRepository.PositionNames);
@@ -64,7 +78,7 @@ namespace ParkApp.components.Infrastructure
 
                 case TableFileKind.Fines:
                     if (sheet.Column(ExcelFineRepository.NumberNames) < 0)
-                        return Invalid("Не найден обязательный столбец «№ постановления».");
+                        return Invalid("не найден обязательный столбец «№ постановления»");
 
                     Optional(sheet, missing, "Дата постановления", ExcelFineRepository.ResolutionDateNames);
                     Optional(sheet, missing, "Дата нарушения", ExcelFineRepository.ViolationDateNames);
@@ -75,7 +89,7 @@ namespace ParkApp.components.Infrastructure
 
                 default:
                     if (sheet.Column(ExcelCarRepository.VinNames) < 0)
-                        return Invalid("Не найден обязательный столбец «VIN» — по нему документы связываются с машиной.");
+                        return Invalid("не найден обязательный столбец «VIN» — по нему документы связываются с машиной");
 
                     Optional(sheet, missing, "Марка автомобиля", ExcelCarRepository.ModelNames);
                     Optional(sheet, missing, "Год выпуска", ExcelCarRepository.YearNames);
@@ -89,7 +103,7 @@ namespace ParkApp.components.Infrastructure
                     break;
             }
 
-            return new TableFileCheck(true, null, missing);
+            return new TableFileCheck(true, null, missing, false, null);
         }
 
         private static void Optional(SheetTable sheet, List<string> missing, string title, string[] names)
@@ -100,20 +114,7 @@ namespace ParkApp.components.Infrastructure
 
         private static TableFileCheck Invalid(string problem)
         {
-            return new TableFileCheck(false, problem, null);
-        }
-
-        private static string SheetNameFor(TableFileKind kind)
-        {
-            switch (kind)
-            {
-                case TableFileKind.People:
-                    return ExcelPersonRepository.SheetName;
-                case TableFileKind.Fines:
-                    return ExcelFineRepository.SheetName;
-                default:
-                    return ExcelCarRepository.SheetName;
-            }
+            return new TableFileCheck(false, problem, null, false, null);
         }
     }
 }

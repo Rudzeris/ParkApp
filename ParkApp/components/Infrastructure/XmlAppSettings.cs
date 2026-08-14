@@ -20,6 +20,7 @@ namespace ParkApp.components.Infrastructure
 
         private readonly HashSet<AppSection> _enabled = new HashSet<AppSection>();
         private readonly Dictionary<PathSetting, string> _paths = new Dictionary<PathSetting, string>();
+        private readonly Dictionary<SheetKind, string> _sheets = new Dictionary<SheetKind, string>();
 
         public XmlAppSettings()
         {
@@ -63,6 +64,20 @@ namespace ParkApp.components.Infrastructure
                 _paths[setting] = path.Trim();
         }
 
+        public string GetSheetName(SheetKind sheet)
+        {
+            string value;
+            return _sheets.TryGetValue(sheet, out value) ? value : null;
+        }
+
+        public void SetSheetName(SheetKind sheet, string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                _sheets.Remove(sheet);
+            else
+                _sheets[sheet] = name.Trim();
+        }
+
         public void Save()
         {
             var document = new XDocument(
@@ -77,6 +92,10 @@ namespace ParkApp.components.Infrastructure
                     new XElement("paths",
                         _paths.Select(pair => new XElement("path",
                             new XAttribute("name", pair.Key.ToString()),
+                            new XAttribute("value", pair.Value)))),
+                    new XElement("sheets",
+                        _sheets.Select(pair => new XElement("sheet",
+                            new XAttribute("name", pair.Key.ToString()),
                             new XAttribute("value", pair.Value))))));
 
             AppPaths.EnsureFolderFor(FilePath);
@@ -87,6 +106,7 @@ namespace ParkApp.components.Infrastructure
         {
             _enabled.Clear();
             _paths.Clear();
+            _sheets.Clear();
 
             if (!File.Exists(FilePath))
             {
@@ -114,6 +134,19 @@ namespace ParkApp.components.Infrastructure
                     AppSection section;
                     if (Enum.TryParse(name, true, out section))
                         _enabled.Add(section);
+                }
+
+                foreach (var element in document.Root.Descendants("sheet"))
+                {
+                    var sheetName = (string)element.Attribute("name");
+                    var sheetValue = (string)element.Attribute("value");
+
+                    if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(sheetValue))
+                        continue;
+
+                    SheetKind sheet;
+                    if (Enum.TryParse(sheetName, true, out sheet))
+                        _sheets[sheet] = sheetValue.Trim();
                 }
 
                 foreach (var element in document.Root.Descendants("path"))

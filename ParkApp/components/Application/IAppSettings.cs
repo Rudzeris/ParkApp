@@ -18,6 +18,12 @@
         /// <summary>Пустое значение возвращает путь к значению по умолчанию.</summary>
         void SetPath(PathSetting setting, string path);
 
+        /// <summary>Выбранное имя листа или null, если используется имя по умолчанию.</summary>
+        string GetSheetName(SheetKind sheet);
+
+        /// <summary>Пустое значение возвращает имя по умолчанию.</summary>
+        void SetSheetName(SheetKind sheet, string name);
+
         /// <summary>Записывает настройки на диск.</summary>
         void Save();
     }
