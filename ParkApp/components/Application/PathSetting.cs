@@ -18,7 +18,10 @@ namespace ParkApp.components.Application
         PeopleFile,
 
         /// <summary>Файл штрафов целиком.</summary>
-        FinesFile
+        FinesFile,
+
+        /// <summary>Файл нарядов и графиков целиком.</summary>
+        DispatchFile
     }
 
     /// <summary>Путь: как называется, папка это или файл, и какую таблицу проверять при выборе.</summary>
@@ -58,7 +61,9 @@ namespace ParkApp.components.Application
             new PathSettingDescription(PathSetting.PeopleFile, "Файл людей",
                 "пусто — «Люди\\Люди.xlsx» в папке справочников", false, TableFileKind.People),
             new PathSettingDescription(PathSetting.FinesFile, "Файл штрафов",
-                "пусто — «Штрафы\\Штрафы.xlsx» в папке документов", false, TableFileKind.Fines)
+                "пусто — «Штрафы\\Штрафы.xlsx» в папке документов", false, TableFileKind.Fines),
+            new PathSettingDescription(PathSetting.DispatchFile, "Файл нарядов",
+                "пусто — «Наряды\\Наряды.xlsx» в папке документов", false, TableFileKind.Dispatch)
         };
 
         public static IReadOnlyList<PathSettingDescription> All

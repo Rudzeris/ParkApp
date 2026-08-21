@@ -16,6 +16,9 @@ namespace ParkApp
         public static PersonService People { get; private set; }
         public static LookupService Lookups { get; private set; }
         public static FineService Fines { get; private set; }
+        public static DispatchService Dispatch { get; private set; }
+        public static IDispatchPrinter DispatchPrinter { get; private set; }
+        public static IFileLauncher Files { get; private set; }
         public static IScanStorage Scans { get; private set; }
         public static IFileDialogService FileDialogs { get; private set; }
         public static IFineDialogService FineDialogs { get; private set; }
@@ -38,11 +41,13 @@ namespace ParkApp
             IPersonRepository personRepository = new ExcelPersonRepository();
             ILookupRepository lookupRepository = new ExcelLookupRepository();
             IFineRepository fineRepository = new ExcelFineRepository();
+            IDispatchRepository dispatchRepository = new ExcelDispatchRepository();
 
             Cars = new CarService(carRepository);
             People = new PersonService(personRepository);
             Lookups = new LookupService(lookupRepository);
             Fines = new FineService(fineRepository);
+            Dispatch = new DispatchService(dispatchRepository, Cars);
 
             Scans = new FileScanStorage();
             FileDialogs = new WpfFileDialogService();
@@ -50,7 +55,9 @@ namespace ParkApp
             Messages = new WpfMessageService();
             TableFiles = new ExcelTableValidator();
             SheetPicker = new WpfSheetPicker();
-            MainDialogs = new WpfMainDialogService(CreateFineListViewModel);
+            DispatchPrinter = new WordDispatchPrinter();
+            Files = new ShellFileLauncher();
+            MainDialogs = new WpfMainDialogService(CreateFineListViewModel, CreateDispatchViewModel);
         }
 
         public static MainViewModel CreateMainViewModel()
@@ -70,6 +77,11 @@ namespace ParkApp
         public static FineListViewModel CreateFineListViewModel()
         {
             return new FineListViewModel(Fines, Cars, Scans, FineDialogs, FileDialogs);
+        }
+
+        public static DispatchViewModel CreateDispatchViewModel()
+        {
+            return new DispatchViewModel(Dispatch, DispatchPrinter, Files, Messages);
         }
 
         public static SettingsViewModel CreateSettingsViewModel()

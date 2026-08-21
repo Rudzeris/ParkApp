@@ -13,10 +13,14 @@ namespace ParkApp.components.View
     public class WpfMainDialogService : IMainDialogService
     {
         private readonly Func<FineListViewModel> _fineListFactory;
+        private readonly Func<DispatchViewModel> _dispatchFactory;
 
-        public WpfMainDialogService(Func<FineListViewModel> fineListFactory)
+        public WpfMainDialogService(
+            Func<FineListViewModel> fineListFactory,
+            Func<DispatchViewModel> dispatchFactory)
         {
             _fineListFactory = fineListFactory;
+            _dispatchFactory = dispatchFactory;
         }
 
         public void OpenSection(AppSection section)
@@ -25,6 +29,10 @@ namespace ParkApp.components.View
             {
                 case AppSection.Fines:
                     Show(new FinesWindow(_fineListFactory()));
+                    break;
+
+                case AppSection.DispatchOrders:
+                    Show(new DispatchWindow(_dispatchFactory()));
                     break;
 
                 default:

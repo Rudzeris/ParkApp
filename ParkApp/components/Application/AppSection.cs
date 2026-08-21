@@ -40,7 +40,7 @@ namespace ParkApp.components.Application
         {
             new SectionDescription(AppSection.Fines, "Штрафы", true),
             new SectionDescription(AppSection.Waybills, "Путевые листы", false),
-            new SectionDescription(AppSection.DispatchOrders, "Наряд на выход", false),
+            new SectionDescription(AppSection.DispatchOrders, "Наряд на выход", true),
             new SectionDescription(AppSection.Insurances, "Страховки", false),
             new SectionDescription(AppSection.Maintenance, "ТО и акты Ф-12", false),
             new SectionDescription(AppSection.People, "Люди", false)

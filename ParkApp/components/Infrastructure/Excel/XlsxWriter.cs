@@ -180,7 +180,8 @@ namespace ParkApp.components.Infrastructure.Excel
             return
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
                 "<styleSheet xmlns=\"" + MainNamespace + "\">" +
-                "<numFmts count=\"1\"><numFmt numFmtId=\"164\" formatCode=\"DD\\.MM\\.YYYY\"/></numFmts>" +
+                "<numFmts count=\"2\"><numFmt numFmtId=\"164\" formatCode=\"DD\\.MM\\.YYYY\"/>" +
+                "<numFmt numFmtId=\"165\" formatCode=\"DD\\.MM\\.YYYY\\ HH:MM\"/></numFmts>" +
                 "<fonts count=\"2\">" +
                 "<font><sz val=\"11\"/><name val=\"Calibri\"/></font>" +
                 "<font><b/><sz val=\"11\"/><name val=\"Calibri\"/></font>" +
@@ -191,11 +192,12 @@ namespace ParkApp.components.Infrastructure.Excel
                 "</fills>" +
                 "<borders count=\"1\"><border><left/><right/><top/><bottom/><diagonal/></border></borders>" +
                 "<cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs>" +
-                "<cellXfs count=\"4\">" +
+                "<cellXfs count=\"5\">" +
                 "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/>" +
                 "<xf numFmtId=\"164\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>" +
                 "<xf numFmtId=\"4\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>" +
                 "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\"/>" +
+                "<xf numFmtId=\"165\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>" +
                 "</cellXfs>" +
                 // без cellStyles Excel считает книгу без стиля по умолчанию и предлагает «восстановить»
                 "<cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles>" +
@@ -276,6 +278,7 @@ namespace ParkApp.components.Infrastructure.Excel
             switch (kind)
             {
                 case XlsxCellKind.Date: return 1;
+                case XlsxCellKind.DateTime: return 4;
                 case XlsxCellKind.Money: return 2;
                 default: return 0;
             }

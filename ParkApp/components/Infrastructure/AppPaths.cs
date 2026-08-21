@@ -27,6 +27,8 @@ namespace ParkApp.components.Infrastructure
         public const string CarsFolderName = "Машины";
         public const string PeopleFolderName = "Люди";
         public const string FinesFolderName = "Штрафы";
+        public const string DispatchFolderName = "Наряды";
+        public const string TemplatesFolderName = "Templates";
         public const string InsurancesFolderName = "Страховки";
         public const string MaintenanceFolderName = "ТО";
         public const string ScansFolderName = "Сканы";
@@ -34,6 +36,7 @@ namespace ParkApp.components.Infrastructure
         public const string CarsFileName = "Машины.xlsx";
         public const string PeopleFileName = "Люди.xlsx";
         public const string FinesFileName = "Штрафы.xlsx";
+        public const string DispatchFileName = "Наряды.xlsx";
 
         private static IAppSettings _settings;
 
@@ -88,6 +91,27 @@ namespace ParkApp.components.Infrastructure
             }
         }
 
+        public static string DispatchFile
+        {
+            get
+            {
+                return FromSettings(PathSetting.DispatchFile)
+                       ?? Path.Combine(DataRoot, DispatchFolderName, DispatchFileName);
+            }
+        }
+
+        /// <summary>Папка шаблонов Word. Лежит рядом с приложением и правится в Word.</summary>
+        public static string TemplatesFolder
+        {
+            get { return Path.Combine(AppFolder, TemplatesFolderName); }
+        }
+
+        /// <summary>Куда складывать напечатанные наряды и путевые листы.</summary>
+        public static string DispatchDocumentsFolder
+        {
+            get { return Path.Combine(DataRoot, DispatchFolderName, "Документы"); }
+        }
+
         /// <summary>
         /// Путь задан пользователем, а не выведен по умолчанию.
         /// Для такого пути отсутствующий файл — ошибка: создавать вместо него
@@ -111,6 +135,8 @@ namespace ParkApp.components.Infrastructure
                     return Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName);
                 case PathSetting.FinesFile:
                     return Path.Combine(DataRoot, FinesFolderName, FinesFileName);
+                case PathSetting.DispatchFile:
+                    return Path.Combine(DataRoot, DispatchFolderName, DispatchFileName);
                 default:
                     return FromConfig("DataRoot") ?? AppFolder;
             }
