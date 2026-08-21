@@ -10,6 +10,7 @@ namespace ParkApp.components.Infrastructure.Excel
         Number,
         Money,
         Date,
+        DateTime,
 
         /// <summary>Значение и оформление берутся из исходного файла как есть.</summary>
         Raw
@@ -80,6 +81,16 @@ namespace ParkApp.components.Infrastructure.Excel
 
             var serial = (int)(value.Value.Date - SerialEpoch).TotalDays;
             return new XlsxCell(serial.ToString(CultureInfo.InvariantCulture), XlsxCellKind.Date);
+        }
+
+        /// <summary>Дата со временем — например, время выезда по наряду.</summary>
+        public static XlsxCell DateAndTime(DateTime? value)
+        {
+            if (!value.HasValue || value.Value == default(DateTime))
+                return Empty;
+
+            var serial = (value.Value - SerialEpoch).TotalDays;
+            return new XlsxCell(serial.ToString("0.######", CultureInfo.InvariantCulture), XlsxCellKind.DateTime);
         }
 
         /// <summary>Обратное преобразование: номер дня Excel в дату.</summary>

@@ -10,7 +10,10 @@ namespace ParkApp.components.Application
         People,
         Fines,
         Affiliation,
-        VehicleType
+        VehicleType,
+        DispatchOrders,
+        CarSchedules,
+        PrintDetails
     }
 
     public class SheetDescription
@@ -39,7 +42,10 @@ namespace ParkApp.components.Application
             new SheetDescription(SheetKind.People, "Лист людей", "Люди"),
             new SheetDescription(SheetKind.Fines, "Лист штрафов", "Штрафы"),
             new SheetDescription(SheetKind.Affiliation, "Лист «Куда относится»", "Куда относится"),
-            new SheetDescription(SheetKind.VehicleType, "Лист «Тип машины»", "Тип машины")
+            new SheetDescription(SheetKind.VehicleType, "Лист «Тип машины»", "Тип машины"),
+            new SheetDescription(SheetKind.DispatchOrders, "Лист нарядов", "Наряды"),
+            new SheetDescription(SheetKind.CarSchedules, "Лист графиков машин", "Графики"),
+            new SheetDescription(SheetKind.PrintDetails, "Лист реквизитов для печати", "Реквизиты")
         };
 
         public static IReadOnlyList<SheetDescription> All
@@ -62,6 +68,8 @@ namespace ParkApp.components.Application
                     return SheetKind.People;
                 case TableFileKind.Fines:
                     return SheetKind.Fines;
+                case TableFileKind.Dispatch:
+                    return SheetKind.DispatchOrders;
                 default:
                     return SheetKind.Cars;
             }

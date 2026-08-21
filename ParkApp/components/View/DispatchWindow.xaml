@@ -1,0 +1,86 @@
+<Window x:Class="ParkApp.components.View.DispatchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Наряд на выход техники" Height="680" Width="1400"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel>
+
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar>
+                <Button Content="Сохранить наряд" Command="{Binding SaveCommand}" Padding="10,2" />
+                <Separator />
+                <Button Content="Печать наряда" Command="{Binding PrintOrderCommand}" Padding="10,2" />
+                <Button Content="Печать путевых листов" Command="{Binding PrintWaybillsCommand}" Padding="10,2" />
+                <Button Content="Путевой лист вне наряда" Command="{Binding PrintOutsideWaybillCommand}" Padding="10,2"
+                        ToolTip="Для выделенной машины, которой нет в наряде" />
+                <Separator />
+                <Button Content="Обновить" Command="{Binding RefreshCommand}" Padding="10,2" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <GroupBox DockPanel.Dock="Top" Header="Наряд" Margin="6,6,6,0">
+            <StackPanel Orientation="Horizontal" Margin="4">
+                <TextBlock Text="Дата:" VerticalAlignment="Center" />
+                <DatePicker Width="140" Margin="6,0,0,0" SelectedDate="{Binding Date}"
+                            ToolTip="По умолчанию — завтра: наряд составляют накануне" />
+
+                <TextBlock Text="Номер наряда:" VerticalAlignment="Center" Margin="16,0,6,0" />
+                <TextBox Width="90" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="{Binding DateTitle}" VerticalAlignment="Center" Margin="24,0,0,0" FontWeight="Bold" />
+
+                <Button Content="Отметить повторяющиеся" Command="{Binding SelectRepeatingCommand}"
+                        Margin="24,0,0,0" Padding="10,2" />
+                <Button Content="Снять все" Command="{Binding ClearSelectionCommand}"
+                        Margin="6,0,0,0" Padding="10,2" />
+            </StackPanel>
+        </GroupBox>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Status}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <DataGrid Margin="6"
+                  ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding SelectedItem}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="All">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="В наряд" Width="65"
+                                        Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridTextColumn Header="Марка машины" Width="140" IsReadOnly="True"
+                                    Binding="{Binding Brand}" />
+                <DataGridTextColumn Header="Г.Р.З." Width="110" IsReadOnly="True"
+                                    Binding="{Binding Plate}" />
+                <DataGridTextColumn Header="Группа" Width="130"
+                                    Binding="{Binding GroupName, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Гр. эксп." Width="70"
+                                    Binding="{Binding OperationGroup, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Для каких целей" Width="160"
+                                    Binding="{Binding Purpose, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Маршрут" Width="150"
+                                    Binding="{Binding Route, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="В чьё распоряжение" Width="170"
+                                    Binding="{Binding Assignment, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Выезд" Width="60"
+                                    Binding="{Binding DepartureText, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Возврат" Width="65"
+                                    Binding="{Binding ReturnText, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Возвращение" Width="105" IsReadOnly="True"
+                                    Binding="{Binding ReturnDayText}" />
+                <DataGridCheckBoxColumn Header="Повторять" Width="75"
+                                        Binding="{Binding RepeatDaily, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridCheckBoxColumn Header="Вне наряда" Width="80"
+                                        Binding="{Binding AllowOutsideOrder, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridTextColumn Header="Примечание" Width="150"
+                                    Binding="{Binding Notes, UpdateSourceTrigger=LostFocus}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </DockPanel>
+</Window>

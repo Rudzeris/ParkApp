@@ -7,7 +7,8 @@ namespace ParkApp.components.Application
     {
         Cars,
         People,
-        Fines
+        Fines,
+        Dispatch
     }
 
     /// <summary>Результат проверки выбранного файла.</summary>

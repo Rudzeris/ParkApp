@@ -82,6 +82,10 @@
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
         </Page>
+        <Page Include="components\View\DispatchWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <SubType>Designer</SubType>
+        </Page>
         <Page Include="components\View\SettingsWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
@@ -97,10 +101,15 @@
         <Compile Include="AppServices.cs" />
         <Compile Include="components\Application\AppSection.cs" />
         <Compile Include="components\Application\CarService.cs" />
+        <Compile Include="components\Application\DispatchPlan.cs" />
+        <Compile Include="components\Application\DispatchService.cs" />
         <Compile Include="components\Application\FineFilter.cs" />
         <Compile Include="components\Application\FineService.cs" />
         <Compile Include="components\Application\IAppSettings.cs" />
         <Compile Include="components\Application\ICarRepository.cs" />
+        <Compile Include="components\Application\IDispatchPrinter.cs" />
+        <Compile Include="components\Application\IDispatchRepository.cs" />
+        <Compile Include="components\Application\IFileLauncher.cs" />
         <Compile Include="components\Application\ILookupRepository.cs" />
         <Compile Include="components\Application\IPersonRepository.cs" />
         <Compile Include="components\Application\IFileDialogService.cs" />
@@ -111,11 +120,15 @@
         <Compile Include="components\Application\LookupService.cs" />
         <Compile Include="components\Application\PathSetting.cs" />
         <Compile Include="components\Application\PaymentTextParser.cs" />
+        <Compile Include="components\Application\PrintDetail.cs" />
         <Compile Include="components\Application\PersonService.cs" />
+        <Compile Include="components\Application\RussianDate.cs" />
         <Compile Include="components\Application\ScanCategory.cs" />
         <Compile Include="components\Application\SheetKind.cs" />
         <Compile Include="components\Domain\Car.cs" />
         <Compile Include="components\Domain\CarNumber.cs" />
+        <Compile Include="components\Domain\CarSchedule.cs" />
+        <Compile Include="components\Domain\DispatchEntry.cs" />
         <Compile Include="components\Domain\Fine.cs" />
         <Compile Include="components\Domain\Location.cs" />
         <Compile Include="components\Domain\NumberType.cs" />
@@ -128,11 +141,15 @@
         <Compile Include="components\Infrastructure\Excel\XlsxSheet.cs" />
         <Compile Include="components\Infrastructure\Excel\XlsxWriter.cs" />
         <Compile Include="components\Infrastructure\ExcelCarRepository.cs" />
+        <Compile Include="components\Infrastructure\ExcelDispatchRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelFineRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelLookupRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelPersonRepository.cs" />
         <Compile Include="components\Infrastructure\ExcelTableValidator.cs" />
         <Compile Include="components\Infrastructure\FileScanStorage.cs" />
+        <Compile Include="components\Infrastructure\ShellFileLauncher.cs" />
+        <Compile Include="components\Infrastructure\Word\WordTemplate.cs" />
+        <Compile Include="components\Infrastructure\WordDispatchPrinter.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
         <Compile Include="components\Infrastructure\XmlAppSettings.cs" />
         <Compile Include="components\View\FineEditWindow.xaml.cs">
@@ -141,6 +158,10 @@
         </Compile>
         <Compile Include="components\View\FinesWindow.xaml.cs">
             <DependentUpon>FinesWindow.xaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
+        <Compile Include="components\View\DispatchWindow.xaml.cs">
+            <DependentUpon>DispatchWindow.xaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
         <Compile Include="components\View\SettingsWindow.xaml.cs">
@@ -158,6 +179,8 @@
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
         <Compile Include="components\ViewModel\CarOption.cs" />
         <Compile Include="components\ViewModel\CarRowViewModel.cs" />
+        <Compile Include="components\ViewModel\DispatchItemViewModel.cs" />
+        <Compile Include="components\ViewModel\DispatchViewModel.cs" />
         <Compile Include="components\ViewModel\FineEditViewModel.cs" />
         <Compile Include="components\ViewModel\FineListViewModel.cs" />
         <Compile Include="components\ViewModel\FineRowViewModel.cs" />
@@ -190,6 +213,17 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="Templates\Наряд.docx">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Templates\Путевой лист.docx">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Templates\Путевой лист (оборот).docx">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
     <ItemGroup>
         <None Include="App.config"/>
