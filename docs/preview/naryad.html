@@ -1,0 +1,982 @@
+<title>Наряд и путевые листы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=PT+Mono&display=swap">
+
+<style>
+  /* Палитра из мира документа: сине-чёрные чернила, синяя шариковая ручка
+     для подписей, красный штамп для «вне наряда», оливково-серый нейтральный. */
+  :root {
+    --ground: #E6E7E1;
+    --panel: #F4F5F1;
+    --ink: #1B2430;
+    --ink-soft: #5C6672;
+    --ink-faint: #8A9199;
+    --rule: #C7CAC2;
+    --rule-soft: #DDDFD8;
+    --blue: #24486B;
+    --blue-wash: #DFE8F1;
+    --stamp: #9E2B21;
+    --stamp-wash: #F2E1DF;
+    --field: #FFFFFF;
+
+    /* лист бумаги остаётся бумагой в любой теме — это предпросмотр печати */
+    --sheet: #FDFDFB;
+    --sheet-ink: #14181F;
+    --sheet-rule: #9AA0A6;
+    --sheet-faint: #6E757C;
+    --sheet-shadow: rgba(27, 36, 48, .18);
+
+    --step-0: 15px;
+    --step--1: 13px;
+    --step--2: 11.5px;
+    --step-1: 18px;
+    --step-2: 23px;
+    --step-3: 30px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14171B;
+      --panel: #1D2126;
+      --ink: #E7E9E3;
+      --ink-soft: #9BA3AB;
+      --ink-faint: #757D85;
+      --rule: #363D46;
+      --rule-soft: #272C33;
+      --blue: #93B8DA;
+      --blue-wash: #1E2C39;
+      --stamp: #E0796D;
+      --stamp-wash: #34211E;
+      --field: #262B31;
+
+      --sheet: #E4E4DE;
+      --sheet-ink: #14181F;
+      --sheet-rule: #8B9198;
+      --sheet-faint: #5D646B;
+      --sheet-shadow: rgba(0, 0, 0, .5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14171B;
+    --panel: #1D2126;
+    --ink: #E7E9E3;
+    --ink-soft: #9BA3AB;
+    --ink-faint: #757D85;
+    --rule: #363D46;
+    --rule-soft: #272C33;
+    --blue: #93B8DA;
+    --blue-wash: #1E2C39;
+    --stamp: #E0796D;
+    --stamp-wash: #34211E;
+    --field: #262B31;
+
+    --sheet: #E4E4DE;
+    --sheet-ink: #14181F;
+    --sheet-rule: #8B9198;
+    --sheet-faint: #5D646B;
+    --sheet-shadow: rgba(0, 0, 0, .5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 var(--step-0)/1.5 "PT Sans", "Segoe UI", system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 14px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ── шапка ───────────────────────────────────────────────── */
+
+  header { display: flex; flex-direction: column; gap: 8px; }
+
+  .eyebrow {
+    font-family: "PT Sans Narrow", "PT Sans", sans-serif;
+    font-size: var(--step--2);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "PT Sans Narrow", "PT Sans", sans-serif;
+    font-weight: 700;
+    font-size: var(--step-3);
+    line-height: 1.12;
+    text-wrap: balance;
+    letter-spacing: -.01em;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: var(--step-0);
+  }
+
+  /* ── общая карточка ──────────────────────────────────────── */
+
+  section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--panel);
+  }
+
+  .bar h2 {
+    margin: 0;
+    font-family: "PT Sans Narrow", "PT Sans", sans-serif;
+    font-size: var(--step-1);
+    font-weight: 700;
+    letter-spacing: .01em;
+  }
+
+  .spacer { flex: 1 1 auto; }
+
+  label.field {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+
+  input[type="date"], input[type="text"], select {
+    font: 400 var(--step--1)/1.3 "PT Sans", sans-serif;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 5px 6px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  input[type="text"].time {
+    font-family: "PT Mono", ui-monospace, monospace;
+    width: 4.2em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="text"].order { width: 5.5em; font-family: "PT Mono", ui-monospace, monospace; }
+
+  select { max-width: 100%; }
+
+  :is(input, select, button, [tabindex]):focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+  }
+
+  button {
+    font: 700 var(--step--1)/1 "PT Sans Narrow", "PT Sans", sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 8px 11px;
+    cursor: pointer;
+  }
+
+  button:hover { border-color: var(--blue); color: var(--blue); }
+
+  button.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--panel);
+  }
+
+  button.primary:hover { filter: brightness(1.12); color: var(--panel); }
+
+  button[aria-pressed="true"] {
+    background: var(--blue-wash);
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  /* ── таблица наряда ──────────────────────────────────────── */
+
+  .rows { display: flex; flex-direction: column; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px 14px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .row:last-child { border-bottom: 0; }
+  .row.on { background: var(--blue-wash); }
+
+  .row > input[type="checkbox"] { margin: 4px 0 0; }
+
+  .car {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
+    min-width: 0;
+  }
+
+  .car b {
+    font-family: "PT Sans Narrow", "PT Sans", sans-serif;
+    font-size: var(--step-1);
+    font-weight: 700;
+  }
+
+  .plate {
+    font-family: "PT Mono", ui-monospace, monospace;
+    font-size: var(--step--2);
+    color: var(--ink-soft);
+    letter-spacing: .03em;
+  }
+
+  /* поля сами укладываются в один столбец на телефоне и в пять на экране */
+  .fields {
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 8px 12px;
+    min-width: 0;
+  }
+
+  .cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .cell select { width: 100%; }
+
+  .cap {
+    font-family: "PT Sans Narrow", "PT Sans", sans-serif;
+    font-size: var(--step--2);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .foot {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    min-width: 0;
+  }
+
+  .times { display: flex; align-items: center; gap: 6px; }
+
+  .arrow { color: var(--ink-faint); font-size: var(--step--1); }
+
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  /* сутки — это сведение, а не тревога: красный оставлен для «вне наряда» */
+  .overnight {
+    font-size: var(--step--2);
+    color: var(--blue);
+    border: 1px solid var(--blue);
+    border-radius: 2px;
+    padding: 1px 6px;
+    white-space: nowrap;
+  }
+
+  .mark.outside input:checked + span { color: var(--stamp); }
+
+  /* ── документ ────────────────────────────────────────────── */
+
+  .stage {
+    background: var(--ground);
+    padding: 16px 10px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    border-top: 1px solid var(--rule);
+    min-width: 0;
+  }
+
+  .stage > .pager { align-self: center; }
+
+  .viewport { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+
+  .scaler { transform-origin: top left; }
+
+  .sheet {
+    width: 660px;
+    background: var(--sheet);
+    color: var(--sheet-ink);
+    font: 400 12px/1.32 "PT Serif", "Times New Roman", serif;
+    padding: 26px 30px 30px;
+    box-shadow: 0 1px 3px var(--sheet-shadow), 0 10px 26px var(--sheet-shadow);
+  }
+
+  .sheet .doc-title {
+    font-family: "PT Serif", serif;
+    font-weight: 700;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: .02em;
+  }
+
+  .sheet .center { text-align: center; }
+  .sheet .hint { font-size: 8.5px; color: var(--sheet-faint); line-height: 1.25; }
+  .sheet .gap { height: 9px; }
+
+  /* линия, по которой пишут от руки: в форме это ctrl+U с пробелами */
+  .u {
+    display: inline-block;
+    min-width: 60px;
+    border-bottom: 1px solid var(--sheet-rule);
+    line-height: 1.15;
+    padding: 0 3px;
+  }
+  .u.grow { min-width: 0; flex: 1 1 auto; }
+  .u.blank { min-height: 1.15em; }
+
+  .line { display: flex; align-items: baseline; gap: 5px; }
+  .line.wide { justify-content: space-between; }
+
+  .permit {
+    border: 1px solid var(--sheet-rule);
+    padding: 8px 10px;
+    margin-bottom: 12px;
+  }
+
+  .permit .head { font-weight: 700; }
+  .permit.outside .head { color: var(--stamp); }
+
+  .sheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5px;
+    line-height: 1.2;
+  }
+
+  .sheet th, .sheet td {
+    border: 1px solid var(--sheet-rule);
+    padding: 3px 4px;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .sheet th { font-weight: 400; color: var(--sheet-faint); font-size: 8.5px; }
+  .sheet td.num { font-family: "PT Mono", monospace; font-variant-numeric: tabular-nums; }
+  .sheet .sec {
+    font-weight: 700;
+    font-size: 11px;
+    margin: 12px 0 4px;
+  }
+
+  .pager {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+
+  .pager b { font-family: "PT Mono", monospace; color: var(--ink); }
+
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ── подвал ──────────────────────────────────────────────── */
+
+  footer {
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  footer b { color: var(--ink); }
+
+  footer ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
+
+  .note {
+    border-left: 2px solid var(--blue);
+    padding-left: 12px;
+    max-width: 70ch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ParkApp · предпросмотр</div>
+    <h1>Наряд на выход техники</h1>
+    <p class="lede">
+      Так выглядит работа в приложении: отметить машины в наряд, выбрать цель и маршрут из списков,
+      поправить время — и получить наряд и путевые листы. Здесь всё живое, можно потрогать с телефона.
+      Документы внизу перерисовываются сразу.
+    </p>
+  </header>
+
+  <section>
+    <div class="bar">
+      <h2>Наряд</h2>
+      <label class="field">Дата <input type="date" id="date"></label>
+      <label class="field">Наряд № <input type="text" class="order" id="order" value="235"></label>
+      <span class="spacer"></span>
+      <button id="repeat">Отметить повторяющиеся</button>
+      <button id="clear">Снять все</button>
+    </div>
+    <div class="rows" id="rows"></div>
+  </section>
+
+  <section>
+    <div class="bar">
+      <h2>Документ</h2>
+      <button id="tab-order" aria-pressed="true">Наряд</button>
+      <button id="tab-waybill" aria-pressed="false">Путевой лист</button>
+      <span class="spacer"></span>
+      <button id="fit" aria-pressed="true">Вписать в экран</button>
+    </div>
+
+    <div class="stage">
+      <div class="pager" id="pager" hidden>
+        <button id="prev">←</button>
+        <span>лист <b id="page-now">1</b> из <b id="page-all">1</b> · <span id="page-car"></span></span>
+        <button id="next">→</button>
+      </div>
+      <div class="viewport" id="viewport">
+        <div class="scaler" id="scaler"><div class="sheet" id="sheet"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="note">
+      <b>Что здесь настоящее.</b> Разметка документов повторяет ваши формы: линии для подписей,
+      прочерки в незаполненных местах, блок разрешения сверху путевого листа и его две формулировки.
+      Приложение печатает это в .docx по вашим же файлам — здесь показано, что подставляется и куда.
+    </p>
+    <ul>
+      <li><b>Списки.</b> Группа, цель, маршрут и «в чьё распоряжение» только выбираются — руками набирают
+        одно время. Значения ведутся в Excel, на листе «Списки» файла нарядов.</li>
+      <li><b>Повторять.</b> Машина с этой отметкой попадает в новый наряд сама. Если наряд на дату уже
+        сохранён и машину из него сняли — она не вернётся.</li>
+      <li><b>Вне наряда.</b> Блок «Использование машины вне наряда … разрешаю» печатается только у машин
+        с этой отметкой; у машины в наряде — «Использование машины … разрешаю».</li>
+      <li><b>Сутки.</b> Если время возврата не больше времени выезда — возвращение назавтра: «с 6 до 6».</li>
+      <li><b>Печать.</b> Все листы одним файлом, по странице на машину; обороты — вторым файлом с тем же
+        числом страниц, чтобы допечатать их тем же тиражом.</li>
+    </ul>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var MONTHS = ["января","февраля","марта","апреля","мая","июня",
+                "июля","августа","сентября","октября","ноября","декабря"];
+
+  // Списки — те же, что приложение читает с листа «Списки»
+  var LISTS = {
+    group: ["—", "Группа боевых машин", "Группа машин обеспечения"],
+    op: ["—", "тр.", "стр.", "уч.-бо."],
+    purpose: ["—", "Перевозка личного состава", "Перевозка материальных средств",
+              "Обеспечение занятий", "Хозяйственные нужды"],
+    route: ["—", "ППД — полигон — ППД", "ППД — город — ППД", "ППД — станция — ППД"],
+    assign: ["—", "начальник штаба", "начальник автослужбы", "командир 1 роты", "дежурный по части"]
+  };
+
+  var DETAILS = {
+    unit: "войсковая часть 01234",
+    permitPost: "командир воинской части",
+    permitRank: "полковник",
+    permitName: "П. Петров",
+    briefPost: "начальник автомобильной службы",
+    briefRank: "майор",
+    briefName: "И. Иванов",
+    respPost: "заместитель командира по вооружению",
+    respRank: "подполковник",
+    respName: "С. Сидоров",
+    agreePost: "начальник штаба",
+    agreeRank: "подполковник",
+    agreeName: "А. Антонов",
+    approvePost: "командир воинской части",
+    approveRank: "полковник",
+    approveName: "П. Петров",
+    signPost: "начальник автомобильной службы",
+    signRank: "майор",
+    signName: "И. Иванов",
+    cargo: "л/с"
+  };
+
+  var CARS = [
+    { brand: "КамАЗ-4310", plate: "1234 АБ 34", group: "Группа боевых машин",
+      op: "тр.", purpose: "Перевозка личного состава", route: "ППД — полигон — ППД",
+      assign: "начальник штаба", from: "06:00", to: "06:00", repeat: true, outside: false },
+    { brand: "Урал-4320", plate: "5678 ВГ 34", group: "Группа боевых машин",
+      op: "тр.", purpose: "Перевозка материальных средств", route: "ППД — станция — ППД",
+      assign: "—", from: "06:00", to: "22:00", repeat: true, outside: false },
+    { brand: "УАЗ-3909", plate: "У 123 Б 12", group: "Группа машин обеспечения",
+      op: "тр.", purpose: "Хозяйственные нужды", route: "ППД — город — ППД",
+      assign: "дежурный по части", from: "07:00", to: "07:00", repeat: false, outside: true },
+    { brand: "Lada Vesta", plate: "А 456 ВС 34", group: "Группа машин обеспечения",
+      op: "тр.", purpose: "Обеспечение занятий", route: "ППД — полигон — ППД",
+      assign: "начальник автослужбы", from: "05:00", to: "05:00", repeat: false, outside: true },
+    { brand: "ГАЗ-66", plate: "7890 ДЕ 34", group: "Группа боевых машин",
+      op: "стр.", purpose: "Обеспечение занятий", route: "ППД — полигон — ППД",
+      assign: "командир 1 роты", from: "06:00", to: "22:00", repeat: false, outside: false }
+  ];
+
+  var state = {
+    date: new Date(Date.now() + 86400000),   // по умолчанию — завтра
+    order: "235",
+    view: "order",
+    page: 0,
+    fit: true,      // на узком экране выключается: см. draw()
+    fitChosen: false,
+    cars: CARS.map(function (c) {
+      var copy = {};
+      for (var k in c) if (Object.prototype.hasOwnProperty.call(c, k)) copy[k] = c[k];
+      copy.on = c.repeat;                    // новый наряд: отмечены «повторяющиеся»
+      return copy;
+    })
+  };
+
+  var el = {
+    rows: document.getElementById("rows"),
+    sheet: document.getElementById("sheet"),
+    scaler: document.getElementById("scaler"),
+    viewport: document.getElementById("viewport"),
+    date: document.getElementById("date"),
+    order: document.getElementById("order"),
+    pager: document.getElementById("pager"),
+    pageNow: document.getElementById("page-now"),
+    pageAll: document.getElementById("page-all"),
+    pageCar: document.getElementById("page-car"),
+    tabOrder: document.getElementById("tab-order"),
+    tabWaybill: document.getElementById("tab-waybill"),
+    fit: document.getElementById("fit")
+  };
+
+  // ── вспомогательное ──────────────────────────────────────
+
+  function two(n) { return n < 10 ? "0" + n : "" + n; }
+  function iso(d) { return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()); }
+  function shortDate(d) { return two(d.getDate()) + "." + two(d.getMonth() + 1) + "." + two(d.getFullYear() % 100); }
+
+  function minutes(text) {
+    var m = /^(\d{1,2})(?:[:.,](\d{1,2}))?$/.exec(String(text).trim());
+    if (!m) return null;
+    var h = +m[1], mi = m[2] ? +m[2] : 0;
+    if (h > 23 || mi > 59) return null;
+    return h * 60 + mi;
+  }
+
+  function timeText(text) {
+    var m = minutes(text);
+    return m === null ? text : two(Math.floor(m / 60)) + ":" + two(m % 60);
+  }
+
+  /** «с 6 до 6» — сутки: возврат не позже выезда значит следующий день. */
+  function overnight(car) {
+    var a = minutes(car.from), b = minutes(car.to);
+    return a !== null && b !== null && b <= a;
+  }
+
+  function returnDate(car) {
+    var d = new Date(state.date.getTime());
+    if (overnight(car)) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  function chosen() {
+    return state.cars.filter(function (c) { return c.on; });
+  }
+
+  function text(value) {
+    return value && value !== "—" ? value : "";
+  }
+
+  function esc(value) {
+    return String(value === undefined || value === null ? "" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  /** Значение на линии; пусто — остаётся сама линия, как в бланке. */
+  function blank(value, width) {
+    var w = width ? ' style="min-width:' + width + 'px"' : "";
+    return '<span class="u' + (text(value) ? "" : " blank") + '"' + w + '>' + esc(text(value)) + "</span>";
+  }
+
+  // ── таблица наряда ───────────────────────────────────────
+
+  function selectBox(list, value, index, key) {
+    var html = '<select data-i="' + index + '" data-k="' + key + '" aria-label="' + esc(key) + '">';
+    var values = LISTS[list].slice();
+    if (value && values.indexOf(value) < 0) values.push(value);   // значение из данных не теряем
+    for (var i = 0; i < values.length; i++) {
+      html += '<option' + (values[i] === value ? " selected" : "") + ">" + esc(values[i]) + "</option>";
+    }
+    return html + "</select>";
+  }
+
+  function drawRows() {
+    var html = "";
+    for (var i = 0; i < state.cars.length; i++) {
+      var c = state.cars[i];
+      html +=
+        '<div class="row' + (c.on ? " on" : "") + '">' +
+          '<input type="checkbox" data-i="' + i + '" data-k="on"' + (c.on ? " checked" : "") +
+            ' aria-label="В наряд: ' + esc(c.brand) + '">' +
+          '<div class="car"><b>' + esc(c.brand) + '</b><span class="plate">' + esc(c.plate) + "</span></div>" +
+          '<div class="fields">' +
+            cell("Группа", "group", c.group, i) +
+            cell("Гр. эксп.", "op", c.op, i) +
+            cell("Для каких целей", "purpose", c.purpose, i) +
+            cell("Маршрут", "route", c.route, i) +
+            cell("В чьё распоряжение", "assign", c.assign, i) +
+          "</div>" +
+          '<div class="foot">' +
+            '<div class="times">' +
+              '<span class="cap">Выезд</span>' +
+              '<input type="text" class="time" data-i="' + i + '" data-k="from" value="' + esc(c.from) + '" aria-label="Время выезда">' +
+              '<span class="arrow">→</span>' +
+              '<input type="text" class="time" data-i="' + i + '" data-k="to" value="' + esc(c.to) + '" aria-label="Время возврата">' +
+            "</div>" +
+            (overnight(c) ? '<span class="overnight">возврат назавтра</span>' : "") +
+            '<label class="mark"><input type="checkbox" data-i="' + i + '" data-k="repeat"' +
+              (c.repeat ? " checked" : "") + "><span>повторять</span></label>" +
+            '<label class="mark outside"><input type="checkbox" data-i="' + i + '" data-k="outside"' +
+              (c.outside ? " checked" : "") + "><span>вне наряда</span></label>" +
+          "</div>" +
+        "</div>";
+    }
+    el.rows.innerHTML = html;
+  }
+
+  function cell(caption, key, value, index) {
+    return '<div class="cell"><span class="cap">' + esc(caption) + "</span>" +
+           selectBox(key, value, index, key) + "</div>";
+  }
+
+  // ── наряд ────────────────────────────────────────────────
+
+  function signature(post, rank, name) {
+    return '<div>' + blank(post, 200) + "</div>" +
+           '<div class="line">' + blank(rank, 120) +
+             '<span class="u grow"></span>' + blank(name, 110) + "</div>" +
+           '<div class="hint">(воинское звание, подпись, инициал имени, фамилия)</div>';
+  }
+
+  function drawOrder() {
+    var picked = chosen();
+    var d = state.date;
+
+    var groups = [], seen = {};
+    picked.forEach(function (c) {
+      var g = text(c.group) || "Без группы";
+      if (!seen[g]) { seen[g] = []; groups.push(g); }
+      seen[g].push(c);
+    });
+
+    var body = "", n = 0;
+    groups.forEach(function (g) {
+      body += '<tr><td colspan="10"><b>' + esc(g) + "</b></td></tr>";
+      seen[g].forEach(function (c) {
+        n++;
+        var back = returnDate(c);
+        body +=
+          "<tr>" +
+            '<td class="num">' + n + "</td>" +
+            "<td>" + esc(c.brand) + "</td>" +
+            '<td class="num">' + esc(c.plate) + "</td>" +
+            "<td>" + esc(text(c.op)) + "</td>" +
+            "<td>" + esc(text(c.purpose)) + "</td>" +
+            "<td>" + esc(text(c.route)) + "</td>" +
+            "<td>" + esc(text(c.assign)) + "</td>" +
+            '<td class="num">' + shortDate(d) + "<br>" + esc(timeText(c.from)) + "</td>" +
+            '<td class="num">' + shortDate(back) + "<br>" + esc(timeText(c.to)) + "</td>" +
+            "<td></td>" +
+          "</tr>";
+      });
+    });
+
+    if (!picked.length) {
+      body = '<tr><td colspan="10" style="text-align:center;padding:14px">' +
+             "в наряде нет ни одной машины</td></tr>";
+    }
+
+    el.sheet.innerHTML =
+      '<div class="line wide" style="align-items:flex-start;gap:24px">' +
+        '<div style="flex:1"><div>СОГЛАСОВАНО</div>' +
+          signature(DETAILS.agreePost, DETAILS.agreeRank, DETAILS.agreeName) +
+          '<div class="line">«' + blank("", 26) + "» " + blank("", 90) + " 20" + blank("", 22) + " г.</div></div>" +
+        '<div style="flex:1"><div>УТВЕРЖДАЮ</div>' +
+          signature(DETAILS.approvePost, DETAILS.approveRank, DETAILS.approveName) +
+          '<div class="line">«' + blank("", 26) + "» " + blank("", 90) + " 20" + blank("", 22) + " г.</div></div>" +
+      "</div>" +
+      '<div class="gap"></div>' +
+      '<div class="doc-title">Н А Р Я Д № ' + esc(state.order || "______") + "</div>" +
+      '<div class="center">На использование машин ' + esc(text(DETAILS.unit)) + "</div>" +
+      '<div class="center">На «' + two(d.getDate()) + "» " + MONTHS[d.getMonth()] + " " + d.getFullYear() + " г.</div>" +
+      '<div class="gap"></div>' +
+      "<table><thead><tr>" +
+        "<th>№ п/п</th><th>Марка машины</th><th>Г.Р.З.</th><th>Группа эксплуатации</th>" +
+        "<th>Для каких целей назначается машина</th><th>Маршрут движения</th>" +
+        "<th>В чьё распоряжение</th><th>Время выезда</th><th>Время возвращения</th><th>Примечание</th>" +
+      "</tr></thead><tbody>" + body + "</tbody></table>" +
+      '<div class="gap"></div>' +
+      '<div style="width:60%">' + signature(DETAILS.signPost, DETAILS.signRank, DETAILS.signName) + "</div>";
+  }
+
+  // ── путевой лист ─────────────────────────────────────────
+
+  function drawWaybill(car) {
+    var d = state.date, back = returnDate(car);
+
+    // Блок печатается у машин, которым разрешение положено. Формулировка
+    // зависит от того, стоит машина в наряде или едет помимо него.
+    var showPermit = !!car.outside;
+    var outside = !car.on;
+
+    var permit = "";
+    if (showPermit) {
+      permit =
+        '<div class="permit' + (outside ? " outside" : "") + '">' +
+          '<div class="head center">Использование машины' + (outside ? " вне наряда" : "") + "</div>" +
+          '<div class="line center" style="justify-content:center">с ' +
+            blank(shortDate(d) + " " + timeText(car.from), 120) + " до " +
+            blank(shortDate(back) + " " + timeText(car.to), 120) + " разрешаю</div>" +
+          '<div class="gap"></div>' +
+          signature(DETAILS.permitPost, DETAILS.permitRank, DETAILS.permitName) +
+          '<div class="line">«' + blank(two(d.getDate()), 26) + "» " +
+            blank(MONTHS[d.getMonth()], 90) + " " + blank(d.getFullYear(), 40) + " г.</div>" +
+        "</div>";
+    }
+
+    el.sheet.innerHTML =
+      permit +
+      '<div class="doc-title">ПУТЕВОЙ ЛИСТ № ' + '<span class="u blank" style="min-width:90px"></span>' + "</div>" +
+      '<div class="center">от «' + blank(two(d.getDate()), 40) + "» " +
+        blank(MONTHS[d.getMonth()], 110) + " " + blank(d.getFullYear(), 50) + " г.</div>" +
+      '<div class="gap"></div>' +
+      '<div class="line">Наименование воинской части (организации)' + blank(DETAILS.unit, 240) + "</div>" +
+      '<div class="hint">(условное, а при отсутствии условного – действительное наименование)</div>' +
+      '<div class="line wide" style="gap:20px;margin-top:6px">' +
+        "<div>Путевой лист действителен по «" + blank(two(back.getDate()), 40) + "» " +
+          blank(MONTHS[back.getMonth()], 100) + " " + blank(back.getFullYear(), 44) + " г.</div>" +
+        "<div>Водитель и старший машины проинструктированы</div>" +
+      "</div>" +
+      '<div class="line wide" style="gap:20px;margin-top:4px">' +
+        '<div style="flex:1">Водитель<span class="u blank" style="min-width:180px"></span>' +
+          '<div class="hint">(воинское звание, инициал имени, фамилия)</div></div>' +
+        '<div style="flex:1">' + blank(DETAILS.briefPost + " " + DETAILS.briefRank, 190) +
+          " " + blank(DETAILS.briefName, 90) +
+          '<div class="hint">(должность, воинское звание, подпись, инициал имени, фамилия)</div></div>' +
+      "</div>" +
+      '<div>Старший машины<span class="u blank" style="min-width:200px"></span></div>' +
+      '<div class="hint">(воинское звание, инициал имени, фамилия)</div>' +
+      '<div class="line" style="margin-top:4px">Маршрут движения ' + blank(car.route, 260) + "</div>" +
+      '<div class="line wide" style="gap:20px;margin-top:4px">' +
+        '<div style="flex:1">Должностное лицо, ответственное за эксплуатацию ТС</div>' +
+        '<div style="flex:1">' + blank(DETAILS.respPost + " " + DETAILS.respRank, 190) +
+          " " + blank(DETAILS.respName, 90) + "</div>" +
+      "</div>" +
+      '<div><b>М.П.</b></div>' +
+
+      '<div class="sec">Убытие и прибытие</div>' +
+      "<table><thead><tr><th></th>" +
+        '<th colspan="2">Убытие</th><th colspan="2">Прибытие</th></tr>' +
+        "<tr><th></th><th>по наряду</th><th>фактически</th><th>по наряду</th><th>фактически</th></tr>" +
+      "</thead><tbody>" +
+        '<tr><td>дата</td><td class="num">' + shortDate(d) + "</td><td></td>" +
+          '<td class="num">' + shortDate(back) + "</td><td></td></tr>" +
+        '<tr><td>время</td><td class="num">' + esc(timeText(car.from)) + "</td><td></td>" +
+          '<td class="num">' + esc(timeText(car.to)) + "</td><td></td></tr>" +
+        "<tr><td>показания одометра</td><td></td><td></td><td></td><td></td></tr>" +
+        "<tr><td>подпись</td><td></td><td></td><td></td><td></td></tr>" +
+      "</tbody></table>" +
+
+      '<div class="sec">Задание</div>' +
+      "<table><thead><tr>" +
+        "<th>Для каких целей назначается</th><th>Тип, марка и модель машины</th>" +
+        "<th>Государственный регистрационный знак</th><th>Марка прицепа</th>" +
+        "<th>Г.Р.З. прицепа</th><th>Группа эксплуатации</th>" +
+        "<th>Перевозимый груз</th><th>Масса груза, т</th>" +
+      "</tr></thead><tbody><tr>" +
+        "<td>" + esc(text(car.purpose)) + "</td>" +
+        "<td>" + esc(car.brand) + "</td>" +
+        '<td class="num">' + esc(car.plate) + "</td>" +
+        "<td>-</td><td>-</td>" +
+        "<td>" + esc(text(car.op)) + "</td>" +
+        "<td>" + esc(DETAILS.cargo) + "</td><td></td>" +
+      "</tr></tbody></table>" +
+
+      '<div class="sec">1. Расход горючего и смазочных материалов (в литрах)</div>' +
+      "<table><thead><tr>" +
+        "<th>Наименование горючего</th><th>Наличие в баках перед выездом</th><th>Получено</th>" +
+        "<th>Наличие при постановке на стоянку</th><th>Положено по норме</th><th>Фактически</th><th>Экономия</th>" +
+      "</tr></thead><tbody><tr>" +
+        "<td></td><td></td><td></td><td></td><td></td><td></td><td></td>" +
+      "</tr></tbody></table>";
+  }
+
+  // ── отрисовка ────────────────────────────────────────────
+
+  function waybillCars() {
+    // печатаем листы на машины наряда, а «вне наряда» — на отмеченные, но не включённые
+    var list = chosen();
+    if (list.length) return list;
+    return state.cars.filter(function (c) { return c.outside; });
+  }
+
+  function draw() {
+    drawRows();
+
+    if (state.view === "order") {
+      el.pager.hidden = true;
+      drawOrder();
+    } else {
+      var list = waybillCars();
+      if (!list.length) {
+        el.pager.hidden = true;
+        el.sheet.innerHTML = '<div class="empty">Отметьте машины в наряд — на каждую печатается свой лист.</div>';
+      } else {
+        if (state.page >= list.length) state.page = list.length - 1;
+        if (state.page < 0) state.page = 0;
+        el.pager.hidden = false;
+        el.pageNow.textContent = state.page + 1;
+        el.pageAll.textContent = list.length;
+        el.pageCar.textContent = list[state.page].brand + " · " + list[state.page].plate;
+        drawWaybill(list[state.page]);
+      }
+    }
+
+    rescale();
+  }
+
+  /**
+   * На телефоне вписанный целиком лист нечитаем — мельче половины размера.
+   * Поэтому там по умолчанию натуральная величина и прокрутка вбок,
+   * а «вписать в экран» остаётся кнопкой, когда нужно увидеть лист целиком.
+   */
+  function pickDefaultFit() {
+    if (state.fitChosen) return;
+    state.fit = el.viewport.clientWidth >= 470;
+    el.fit.setAttribute("aria-pressed", String(state.fit));
+  }
+
+  function rescale() {
+    pickDefaultFit();
+
+    if (!state.fit) {
+      el.scaler.style.transform = "none";
+      el.scaler.style.height = "";
+      return;
+    }
+    var available = el.viewport.clientWidth;
+    var scale = Math.min(1, available / 660);
+    el.scaler.style.transform = "scale(" + scale + ")";
+    el.scaler.style.height = (el.sheet.offsetHeight * scale) + "px";
+  }
+
+  // ── события ──────────────────────────────────────────────
+
+  el.rows.addEventListener("change", function (e) {
+    var t = e.target;
+    if (!t.dataset || t.dataset.i === undefined) return;
+    var car = state.cars[+t.dataset.i], key = t.dataset.k;
+
+    if (t.type === "checkbox") car[key] = t.checked;
+    else if (key === "from" || key === "to") car[key] = minutes(t.value) === null ? car[key] : timeText(t.value);
+    else car[key] = t.value;
+
+    draw();
+  });
+
+  el.date.addEventListener("change", function () {
+    var parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(el.date.value);
+    if (!parts) return;
+    state.date = new Date(+parts[1], +parts[2] - 1, +parts[3]);
+    draw();
+  });
+
+  el.order.addEventListener("input", function () {
+    state.order = el.order.value;
+    if (state.view === "order") draw();
+  });
+
+  document.getElementById("repeat").addEventListener("click", function () {
+    state.cars.forEach(function (c) { if (c.repeat) c.on = true; });
+    draw();
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    state.cars.forEach(function (c) { c.on = false; });
+    draw();
+  });
+
+  function setView(view) {
+    state.view = view;
+    state.page = 0;
+    el.tabOrder.setAttribute("aria-pressed", view === "order");
+    el.tabWaybill.setAttribute("aria-pressed", view === "waybill");
+    draw();
+  }
+
+  el.tabOrder.addEventListener("click", function () { setView("order"); });
+  el.tabWaybill.addEventListener("click", function () { setView("waybill"); });
+
+  document.getElementById("prev").addEventListener("click", function () { state.page--; draw(); });
+  document.getElementById("next").addEventListener("click", function () { state.page++; draw(); });
+
+  el.fit.addEventListener("click", function () {
+    state.fit = !state.fit;
+    state.fitChosen = true;
+    el.fit.setAttribute("aria-pressed", String(state.fit));
+    rescale();
+  });
+
+  window.addEventListener("resize", rescale);
+
+  el.date.value = iso(state.date);
+  draw();
+})();
+</script>
