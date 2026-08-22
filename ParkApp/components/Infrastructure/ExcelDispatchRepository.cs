@@ -15,7 +15,8 @@ namespace ParkApp.components.Infrastructure
     /// поэтому пишется целиком тремя листами:
     ///   «Наряды»    — строки нарядов по датам;
     ///   «Графики»   — постоянные настройки машин (время, «повторить», цель, маршрут);
-    ///   «Реквизиты» — наименование части и подписанты для печати.
+    ///   «Реквизиты» — наименование части и подписанты для печати;
+    ///   «Списки»    — значения, которые выбирают в таблице наряда.
     /// </summary>
     public class ExcelDispatchRepository : IDispatchRepository
     {
@@ -52,6 +53,11 @@ namespace ParkApp.components.Infrastructure
             get { return AppSheets.Name(SheetKind.PrintDetails); }
         }
 
+        public static string ListsSheetName
+        {
+            get { return AppSheets.Name(SheetKind.DispatchLists); }
+        }
+
         public static readonly string[] DateNames = { "Дата наряда", "Дата" };
         public static readonly string[] OrderNumberNames = { "Номер наряда", "Наряд №", "Номер" };
         public static readonly string[] VinNames = { "VIN", "ВИН" };
@@ -80,7 +86,7 @@ namespace ParkApp.components.Infrastructure
                 var others = LoadOrders().Where(e => e.Date.Date != day).ToList();
                 others.AddRange(entries ?? new List<DispatchEntry>());
 
-                Save(others, LoadSchedules(), LoadDetails());
+                Save(others, LoadSchedules(), LoadDetails(), LoadChoices());
             }
 
             return Task.CompletedTask;
@@ -99,7 +105,7 @@ namespace ParkApp.components.Infrastructure
         {
             lock (Sync)
             {
-                Save(LoadOrders(), (schedules ?? new List<CarSchedule>()).ToList(), LoadDetails());
+                Save(LoadOrders(), (schedules ?? new List<CarSchedule>()).ToList(), LoadDetails(), LoadChoices());
             }
 
             return Task.CompletedTask;
@@ -114,6 +120,14 @@ namespace ParkApp.components.Infrastructure
             }
         }
 
+        public Task<DispatchChoices> GetChoicesAsync()
+        {
+            lock (Sync)
+            {
+                return Task.FromResult(LoadChoices());
+            }
+        }
+
         private static void EnsureFile()
         {
             var path = AppPaths.DispatchFile;
@@ -125,7 +139,7 @@ namespace ParkApp.components.Infrastructure
                     "Файл нарядов не найден:{0}{1}{0}{0}Проверьте путь в настройках — возможно, файл переместили.",
                     Environment.NewLine, path));
 
-            Save(new List<DispatchEntry>(), new List<CarSchedule>(), DefaultDetails());
+            Save(new List<DispatchEntry>(), new List<CarSchedule>(), DefaultDetails(), DispatchChoices.Default());
         }
 
         private static SheetTable ReadSheet(string sheetName)
@@ -309,10 +323,50 @@ namespace ParkApp.components.Infrastructure
             return details;
         }
 
+        /// <summary>
+        /// Списки для выбора в наряде. Лист новый: у тех, кто завёл файл раньше,
+        /// его нет — тогда берём заготовку, а не роняем окно.
+        /// </summary>
+        private static DispatchChoices LoadChoices()
+        {
+            EnsureFile();
+
+            var sheet = XlsxReader.ReadOrNull(AppPaths.DispatchFile, ListsSheetName);
+            if (sheet == null)
+                return DispatchChoices.Default();
+
+            var choices = new DispatchChoices();
+
+            foreach (var column in DispatchChoices.Columns)
+            {
+                var index = sheet.Column(column);
+                if (index < 0)
+                    continue;
+
+                var values = new List<string>();
+                var known = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+                foreach (var row in sheet.Rows)
+                {
+                    var value = SheetTable.GetString(row, index);
+                    if (value == null)
+                        continue;
+
+                    if (known.Add(value))
+                        values.Add(value);
+                }
+
+                choices.SetByColumn(column, values);
+            }
+
+            return choices;
+        }
+
         private static void Save(
             List<DispatchEntry> entries,
             List<CarSchedule> schedules,
-            Dictionary<string, string> details)
+            Dictionary<string, string> details,
+            DispatchChoices choices)
         {
             var orderRows = entries
                 .OrderBy(e => e.Date)
@@ -367,8 +421,37 @@ namespace ParkApp.components.Infrastructure
             {
                 new XlsxSheet(OrdersSheetName, OrderHeaders, orderRows),
                 new XlsxSheet(SchedulesSheetName, ScheduleHeaders, scheduleRows),
-                new XlsxSheet(DetailsSheetName, DetailHeaders, detailRows)
+                new XlsxSheet(DetailsSheetName, DetailHeaders, detailRows),
+                new XlsxSheet(ListsSheetName, DispatchChoices.Columns, ListRows(choices))
             });
+        }
+
+        /// <summary>
+        /// Лист «Списки»: по столбцу на список, длина столбцов разная,
+        /// поэтому короткие добиваются пустыми ячейками.
+        /// </summary>
+        private static List<IList<XlsxCell>> ListRows(DispatchChoices choices)
+        {
+            var source = choices ?? DispatchChoices.Default();
+
+            var columns = DispatchChoices.Columns
+                .Select(column => source.AllOf(column).ToList())
+                .ToList();
+
+            var height = columns.Count == 0 ? 0 : columns.Max(c => c.Count);
+
+            var rows = new List<IList<XlsxCell>>();
+
+            for (var line = 0; line < height; line++)
+            {
+                var row = new List<XlsxCell>();
+                foreach (var column in columns)
+                    row.Add(XlsxCell.Text(line < column.Count ? column[line] : null));
+
+                rows.Add(row);
+            }
+
+            return rows;
         }
 
         private static string FormatTime(TimeSpan time)

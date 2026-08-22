@@ -1,22 +1,54 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using ParkApp.components.Application;
 
 namespace ParkApp.components.ViewModel
 {
     /// <summary>
     /// Строка наряда: машина, её время и постоянные отметки.
-    /// Время редактируется как «06:00» — так его и называют в парке.
+    ///
+    /// Руками в строке набирают только время — «06:00», как его называют
+    /// в парке. Группа, цель, маршрут и прочее выбираются из списков:
+    /// набранное с клавиатуры расходится опечатками и потом не сходится
+    /// ни в наряде, ни в путевом листе.
     /// </summary>
     public class DispatchItemViewModel : ViewModelBase
     {
+        /// <summary>Первый пункт любого списка: «значения нет».</summary>
+        public const string Empty = "—";
+
         private readonly DispatchPlanItem _item;
+        private readonly DispatchChoices _choices;
         private DateTime _date;
 
-        public DispatchItemViewModel(DispatchPlanItem item, DateTime date)
+        public DispatchItemViewModel(DispatchPlanItem item, DateTime date, DispatchChoices choices)
         {
             _item = item;
             _date = date;
+            _choices = choices ?? new DispatchChoices();
+
+            GroupOptions = Options(DispatchChoices.GroupColumn);
+            OperationGroupOptions = Options(DispatchChoices.OperationGroupColumn);
+            PurposeOptions = Options(DispatchChoices.PurposeColumn);
+            RouteOptions = Options(DispatchChoices.RouteColumn);
+            AssignmentOptions = Options(DispatchChoices.AssignmentColumn);
+            NotesOptions = Options(DispatchChoices.NotesColumn);
+        }
+
+        public IReadOnlyList<string> GroupOptions { get; private set; }
+        public IReadOnlyList<string> OperationGroupOptions { get; private set; }
+        public IReadOnlyList<string> PurposeOptions { get; private set; }
+        public IReadOnlyList<string> RouteOptions { get; private set; }
+        public IReadOnlyList<string> AssignmentOptions { get; private set; }
+        public IReadOnlyList<string> NotesOptions { get; private set; }
+
+        private IReadOnlyList<string> Options(string column)
+        {
+            var values = new List<string> { Empty };
+            values.AddRange(_choices.AllOf(column).Select(v => v.Trim()));
+            return values;
         }
 
         public DispatchPlanItem Item
@@ -56,38 +88,86 @@ namespace ParkApp.components.ViewModel
 
         public string GroupName
         {
-            get { return _item.GroupName; }
-            set { if (_item.GroupName != value) { _item.GroupName = value; OnPropertyChanged("GroupName"); } }
+            get { return Shown(_item.GroupName); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.GroupName == stored)
+                    return;
+
+                _item.GroupName = stored;
+                OnPropertyChanged("GroupName");
+            }
         }
 
         public string OperationGroup
         {
-            get { return _item.OperationGroup; }
-            set { if (_item.OperationGroup != value) { _item.OperationGroup = value; OnPropertyChanged("OperationGroup"); } }
+            get { return Shown(_item.OperationGroup); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.OperationGroup == stored)
+                    return;
+
+                _item.OperationGroup = stored;
+                OnPropertyChanged("OperationGroup");
+            }
         }
 
         public string Purpose
         {
-            get { return _item.Purpose; }
-            set { if (_item.Purpose != value) { _item.Purpose = value; OnPropertyChanged("Purpose"); } }
+            get { return Shown(_item.Purpose); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.Purpose == stored)
+                    return;
+
+                _item.Purpose = stored;
+                OnPropertyChanged("Purpose");
+            }
         }
 
         public string Route
         {
-            get { return _item.Route; }
-            set { if (_item.Route != value) { _item.Route = value; OnPropertyChanged("Route"); } }
+            get { return Shown(_item.Route); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.Route == stored)
+                    return;
+
+                _item.Route = stored;
+                OnPropertyChanged("Route");
+            }
         }
 
         public string Assignment
         {
-            get { return _item.Assignment; }
-            set { if (_item.Assignment != value) { _item.Assignment = value; OnPropertyChanged("Assignment"); } }
+            get { return Shown(_item.Assignment); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.Assignment == stored)
+                    return;
+
+                _item.Assignment = stored;
+                OnPropertyChanged("Assignment");
+            }
         }
 
         public string Notes
         {
-            get { return _item.Notes; }
-            set { if (_item.Notes != value) { _item.Notes = value; OnPropertyChanged("Notes"); } }
+            get { return Shown(_item.Notes); }
+            set
+            {
+                var stored = Stored(value);
+                if (_item.Notes == stored)
+                    return;
+
+                _item.Notes = stored;
+                OnPropertyChanged("Notes");
+            }
         }
 
         /// <summary>«Повторить»: машина попадает в наряд каждый день сама.</summary>
@@ -150,6 +230,17 @@ namespace ParkApp.components.ViewModel
         public string ReturnDayText
         {
             get { return _item.ReturnAt.Date > _item.DepartureAt.Date ? "следующий день" : "в тот же день"; }
+        }
+
+        /// <summary>В списке пустое значение — это «—», в данных — пустая ячейка.</summary>
+        private static string Shown(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? Empty : value;
+        }
+
+        private static string Stored(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) || value == Empty ? null : value;
         }
 
         private void Recalculate()

@@ -13,7 +13,8 @@ namespace ParkApp.components.Application
         VehicleType,
         DispatchOrders,
         CarSchedules,
-        PrintDetails
+        PrintDetails,
+        DispatchLists
     }
 
     public class SheetDescription
@@ -45,7 +46,8 @@ namespace ParkApp.components.Application
             new SheetDescription(SheetKind.VehicleType, "Лист «Тип машины»", "Тип машины"),
             new SheetDescription(SheetKind.DispatchOrders, "Лист нарядов", "Наряды"),
             new SheetDescription(SheetKind.CarSchedules, "Лист графиков машин", "Графики"),
-            new SheetDescription(SheetKind.PrintDetails, "Лист реквизитов для печати", "Реквизиты")
+            new SheetDescription(SheetKind.PrintDetails, "Лист реквизитов для печати", "Реквизиты"),
+            new SheetDescription(SheetKind.DispatchLists, "Лист списков для наряда", "Списки")
         };
 
         public static IReadOnlyList<SheetDescription> All

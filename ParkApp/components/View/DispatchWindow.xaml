@@ -3,6 +3,26 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Наряд на выход техники" Height="680" Width="1400"
         WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <!--
+            Значения в наряде выбирают из списка, а не набирают: набранное
+            руками расходится опечатками и потом не сходится ни в наряде,
+            ни в путевом листе. Списки ведутся в Excel, на листе «Списки».
+
+            ComboBox стоит прямо в ячейке, а не появляется по двойному щелчку:
+            наряд заполняют сразу по многим строкам, и лишний щелчок на каждую
+            ячейку заметен.
+        -->
+        <Style x:Key="CellBox" TargetType="ComboBox">
+            <Setter Property="IsEditable" Value="False" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
     <DockPanel>
 
         <ToolBarTray DockPanel.Dock="Top">
@@ -10,7 +30,8 @@
                 <Button Content="Сохранить наряд" Command="{Binding SaveCommand}" Padding="10,2" />
                 <Separator />
                 <Button Content="Печать наряда" Command="{Binding PrintOrderCommand}" Padding="10,2" />
-                <Button Content="Печать путевых листов" Command="{Binding PrintWaybillsCommand}" Padding="10,2" />
+                <Button Content="Печать путевых листов" Command="{Binding PrintWaybillsCommand}" Padding="10,2"
+                        ToolTip="Все листы одним файлом: лицевые страницы и столько же оборотов" />
                 <Button Content="Путевой лист вне наряда" Command="{Binding PrintOutsideWaybillCommand}" Padding="10,2"
                         ToolTip="Для выделенной машины, которой нет в наряде" />
                 <Separator />
@@ -57,28 +78,79 @@
                                     Binding="{Binding Brand}" />
                 <DataGridTextColumn Header="Г.Р.З." Width="110" IsReadOnly="True"
                                     Binding="{Binding Plate}" />
-                <DataGridTextColumn Header="Группа" Width="130"
-                                    Binding="{Binding GroupName, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="Гр. эксп." Width="70"
-                                    Binding="{Binding OperationGroup, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="Для каких целей" Width="160"
-                                    Binding="{Binding Purpose, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="Маршрут" Width="150"
-                                    Binding="{Binding Route, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="В чьё распоряжение" Width="170"
-                                    Binding="{Binding Assignment, UpdateSourceTrigger=LostFocus}" />
+
+                <DataGridTemplateColumn Header="Группа" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding GroupOptions}"
+                                      SelectedItem="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Гр. эксп." Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding OperationGroupOptions}"
+                                      SelectedItem="{Binding OperationGroup, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Для каких целей" Width="180">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding PurposeOptions}"
+                                      SelectedItem="{Binding Purpose, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Маршрут" Width="170">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding RouteOptions}"
+                                      SelectedItem="{Binding Route, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="В чьё распоряжение" Width="180">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding AssignmentOptions}"
+                                      SelectedItem="{Binding Assignment, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- время — единственное, что набирают руками: «6», «6:00», «06.00» -->
                 <DataGridTextColumn Header="Выезд" Width="60"
                                     Binding="{Binding DepartureText, UpdateSourceTrigger=LostFocus}" />
                 <DataGridTextColumn Header="Возврат" Width="65"
                                     Binding="{Binding ReturnText, UpdateSourceTrigger=LostFocus}" />
                 <DataGridTextColumn Header="Возвращение" Width="105" IsReadOnly="True"
                                     Binding="{Binding ReturnDayText}" />
+
                 <DataGridCheckBoxColumn Header="Повторять" Width="75"
                                         Binding="{Binding RepeatDaily, UpdateSourceTrigger=PropertyChanged}" />
                 <DataGridCheckBoxColumn Header="Вне наряда" Width="80"
                                         Binding="{Binding AllowOutsideOrder, UpdateSourceTrigger=PropertyChanged}" />
-                <DataGridTextColumn Header="Примечание" Width="150"
-                                    Binding="{Binding Notes, UpdateSourceTrigger=LostFocus}" />
+
+                <DataGridTemplateColumn Header="Примечание" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox Style="{StaticResource CellBox}"
+                                      ItemsSource="{Binding NotesOptions}"
+                                      SelectedItem="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 

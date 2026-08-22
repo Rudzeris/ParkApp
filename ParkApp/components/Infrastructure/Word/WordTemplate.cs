@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -15,14 +14,17 @@ namespace ParkApp.components.Infrastructure.Word
     /// значений и размножение строк таблицы.
     ///
     /// Шаблоны лежат в папке Templates и правятся в Word: приложение ищет
-    /// в них плейсхолдеры вида {{КЛЮЧ}}. Незаполненные плейсхолдеры убираются,
-    /// чтобы в готовом документе не осталось фигурных скобок.
+    /// в них плейсхолдеры вида {{КЛЮЧ}}. У плейсхолдера может быть заполнитель —
+    /// {{КЛЮЧ|_______}}: если значения нет, печатается он, и в бумаге остаётся
+    /// линия, по которой допишут от руки. Без заполнителя пустое место просто
+    /// остаётся пустым — фигурных скобок в готовом документе не бывает.
     /// </summary>
     public class WordTemplate
     {
         private static readonly XNamespace W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
         private static readonly XNamespace Xml = "http://www.w3.org/XML/1998/namespace";
-        private static readonly Regex Placeholder = new Regex(@"\{\{[^{}]+\}\}", RegexOptions.Compiled);
+        private static readonly Regex Placeholder =
+            new Regex(@"\{\{(?<key>[^{}|]*?)(\|(?<fill>[^{}]*))?\}\}", RegexOptions.Compiled);
 
         private readonly Dictionary<string, byte[]> _parts = new Dictionary<string, byte[]>(StringComparer.Ordinal);
         private XDocument _document;
@@ -88,6 +90,9 @@ namespace ParkApp.components.Infrastructure.Word
         /// <summary>Подставляет значения по всему документу.</summary>
         public void Fill(IDictionary<string, string> values)
         {
+            if (values == null || values.Count == 0)
+                return;
+
             foreach (var paragraph in _document.Descendants(W + "p").ToList())
                 FillParagraph(paragraph, values);
         }
@@ -151,7 +156,10 @@ namespace ParkApp.components.Infrastructure.Word
             {
                 // сами метки в документе не нужны
                 for (var i = start; i <= end; i++)
-                    ReplaceText(paragraphs[i], open, string.Empty, close, string.Empty);
+                {
+                    RemoveMarker(paragraphs[i], open);
+                    RemoveMarker(paragraphs[i], close);
+                }
 
                 return;
             }
@@ -318,7 +326,10 @@ namespace ParkApp.components.Infrastructure.Word
             if (keep)
             {
                 for (var i = start; i <= end; i++)
-                    ReplaceText(paragraphs[i], open, string.Empty, close, string.Empty);
+                {
+                    RemoveMarker(paragraphs[i], open);
+                    RemoveMarker(paragraphs[i], close);
+                }
 
                 return;
             }
@@ -338,50 +349,124 @@ namespace ParkApp.components.Infrastructure.Word
             if (values == null || values.Count == 0)
                 return;
 
+            ReplaceInParagraph(paragraph, match =>
+            {
+                string value;
+                if (!values.TryGetValue(match.Groups["key"].Value, out value))
+                    return null; // чужой плейсхолдер: его заполнит другой проход
+
+                return Fallback(value, match);
+            });
+        }
+
+        /// <summary>
+        /// Подстановка по всему абзацу с сохранением «run»-ов.
+        ///
+        /// Word режет текст на десятки кусков, и плейсхолдер обычно лежит сразу
+        /// в нескольких. Схлопывать абзац в первый кусок нельзя: в форме на этих
+        /// местах стоят подчёркнутые линии для подписей и текст, набранный другим
+        /// начертанием, — всё это пропало бы. Поэтому меняется ровно найденный
+        /// отрезок, а значение попадает в первый задетый кусок и наследует его
+        /// оформление: подпись печатается на линии, а не рядом с ней.
+        /// </summary>
+        private static void ReplaceInParagraph(XElement paragraph, Func<Match, string> resolve)
+        {
             var texts = paragraph.Descendants(W + "t").ToList();
             if (texts.Count == 0)
                 return;
 
-            foreach (var text in texts)
-                SetText(text, Apply(text.Value, values));
-
-            // плейсхолдер мог оказаться разорванным между кусками текста —
-            // тогда склеиваем абзац и подставляем в него
-            var whole = string.Concat(texts.Select(t => t.Value));
-            if (!Placeholder.IsMatch(whole))
+            var parts = texts.Select(t => t.Value ?? string.Empty).ToList();
+            if (string.Concat(parts).IndexOf("{{", StringComparison.Ordinal) < 0)
                 return;
 
-            var filled = Apply(whole, values);
-            if (filled == whole)
-                return;
+            var changed = false;
+            var from = 0;
 
-            SetText(texts[0], filled);
-            for (var i = 1; i < texts.Count; i++)
-                SetText(texts[i], string.Empty);
-        }
-
-        private static string Apply(string text, IDictionary<string, string> values)
-        {
-            if (string.IsNullOrEmpty(text) || text.IndexOf("{{", StringComparison.Ordinal) < 0)
-                return text;
-
-            var builder = new StringBuilder(text);
-            foreach (var pair in values)
-                builder.Replace("{{" + pair.Key + "}}", pair.Value ?? string.Empty);
-
-            return builder.ToString();
-        }
-
-        private static void ReplaceText(XElement paragraph, params string[] pairs)
-        {
-            foreach (var text in paragraph.Descendants(W + "t"))
+            while (true)
             {
-                var value = text.Value;
-                for (var i = 0; i + 1 < pairs.Length; i += 2)
-                    value = value.Replace(pairs[i], pairs[i + 1]);
+                var whole = string.Concat(parts);
+                if (from > whole.Length)
+                    break;
 
-                SetText(text, value);
+                var match = Placeholder.Match(whole, from);
+                if (!match.Success)
+                    break;
+
+                var value = resolve(match);
+                if (value == null)
+                {
+                    from = match.Index + match.Length;
+                    continue;
+                }
+
+                Splice(parts, match.Index, match.Length, value);
+                changed = true;
+                from = match.Index + value.Length;
             }
+
+            if (!changed)
+                return;
+
+            for (var i = 0; i < texts.Count; i++)
+                SetText(texts[i], parts[i]);
+        }
+
+        /// <summary>Меняет отрезок склеенного текста, не трогая куски вокруг него.</summary>
+        private static void Splice(IList<string> parts, int start, int length, string replacement)
+        {
+            var end = start + length;
+            var offset = 0;
+            var placed = false;
+
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var part = parts[i];
+                var partStart = offset;
+                var partEnd = offset + part.Length;
+                offset = partEnd;
+
+                if (partEnd <= start || partStart >= end)
+                    continue;
+
+                var head = part.Substring(0, Math.Max(start, partStart) - partStart);
+                var tail = part.Substring(Math.Min(end, partEnd) - partStart);
+
+                parts[i] = placed ? head + tail : head + replacement + tail;
+                placed = true;
+            }
+        }
+
+        /// <summary>
+        /// Чем печатать пустое значение. В форме на месте номера и дат стоят
+        /// прочерки — если приложению нечего подставить, они должны остаться:
+        /// пустая строка в бумаге хуже линии, на которой можно дописать.
+        /// </summary>
+        private static string Fallback(string value, Match match)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            var fill = match.Groups["fill"];
+            return fill.Success ? fill.Value : string.Empty;
+        }
+
+        /// <summary>Убирает служебную метку блока, не разрушая оформление абзаца.</summary>
+        private static void RemoveMarker(XElement paragraph, string marker)
+        {
+            var texts = paragraph.Descendants(W + "t").ToList();
+            if (texts.Count == 0)
+                return;
+
+            var parts = texts.Select(t => t.Value ?? string.Empty).ToList();
+
+            var index = string.Concat(parts).IndexOf(marker, StringComparison.Ordinal);
+            if (index < 0)
+                return;
+
+            Splice(parts, index, marker.Length, string.Empty);
+
+            for (var i = 0; i < texts.Count; i++)
+                SetText(texts[i], parts[i]);
         }
 
         private static string ParagraphText(XElement paragraph)
@@ -389,16 +474,14 @@ namespace ParkApp.components.Infrastructure.Word
             return string.Concat(paragraph.Descendants(W + "t").Select(t => t.Value));
         }
 
-        /// <summary>Убирает плейсхолдеры, которым не нашлось значения.</summary>
+        /// <summary>
+        /// Плейсхолдеры, которым не нашлось значения, заменяются заполнителем
+        /// из шаблона — а если его нет, убираются совсем.
+        /// </summary>
         private void StripPlaceholders()
         {
-            foreach (var text in _document.Descendants(W + "t").ToList())
-            {
-                if (text.Value.IndexOf("{{", StringComparison.Ordinal) < 0)
-                    continue;
-
-                SetText(text, Placeholder.Replace(text.Value, string.Empty));
-            }
+            foreach (var paragraph in _document.Descendants(W + "p").ToList())
+                ReplaceInParagraph(paragraph, match => Fallback(string.Empty, match));
         }
 
         private static void SetText(XElement text, string value)
