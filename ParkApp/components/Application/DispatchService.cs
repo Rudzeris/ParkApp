@@ -43,6 +43,7 @@ namespace ParkApp.components.Application
             var schedules = await _repo.GetSchedulesAsync();
             var entries = await _repo.GetByDateAsync(day);
             var details = await _repo.GetPrintDetailsAsync();
+            var choices = await _repo.GetChoicesAsync();
 
             var schedulesByVin = new Dictionary<string, CarSchedule>(StringComparer.OrdinalIgnoreCase);
             foreach (var schedule in schedules)
@@ -63,6 +64,7 @@ namespace ParkApp.components.Application
                 Date = day,
                 IsNew = entries.Count == 0,
                 Details = details,
+                Choices = choices,
                 OrderNumber = entries.Select(e => e.OrderNumber).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n))
             };
 
@@ -102,10 +104,29 @@ namespace ParkApp.components.Application
                 plan.Items.Add(item);
             }
 
+            IncludeUsedValues(plan);
+
             if (string.IsNullOrWhiteSpace(plan.OrderNumber))
                 plan.OrderNumber = await NextOrderNumberAsync(day);
 
             return plan;
+        }
+
+        /// <summary>
+        /// Дополняет списки тем, что уже стоит у машин. В таблице наряда выбирают
+        /// только из списка, поэтому значение, записанное раньше или правкой файла
+        /// в Excel, обязано в списке оказаться — иначе выбор его молча потеряет.
+        /// </summary>
+        private static void IncludeUsedValues(DispatchPlan plan)
+        {
+            var choices = plan.Choices ?? (plan.Choices = new DispatchChoices());
+
+            choices.Include(DispatchChoices.GroupColumn, plan.Items.Select(i => i.GroupName));
+            choices.Include(DispatchChoices.OperationGroupColumn, plan.Items.Select(i => i.OperationGroup));
+            choices.Include(DispatchChoices.PurposeColumn, plan.Items.Select(i => i.Purpose));
+            choices.Include(DispatchChoices.RouteColumn, plan.Items.Select(i => i.Route));
+            choices.Include(DispatchChoices.AssignmentColumn, plan.Items.Select(i => i.Assignment));
+            choices.Include(DispatchChoices.NotesColumn, plan.Items.Select(i => i.Notes));
         }
 
         /// <summary>

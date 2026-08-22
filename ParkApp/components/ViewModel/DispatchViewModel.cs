@@ -130,7 +130,7 @@ namespace ParkApp.components.ViewModel
                 Items.Clear();
                 foreach (var item in _plan.Items)
                 {
-                    var row = new DispatchItemViewModel(item, _date);
+                    var row = new DispatchItemViewModel(item, _date, _plan.Choices);
 
                     // счётчик в статусе должен меняться сразу при снятии галки
                     row.PropertyChanged += OnItemChanged;

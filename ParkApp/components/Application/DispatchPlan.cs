@@ -51,5 +51,8 @@ namespace ParkApp.components.Application
 
         /// <summary>Реквизиты для печати.</summary>
         public IDictionary<string, string> Details { get; set; }
+
+        /// <summary>Что можно выбрать в таблице наряда.</summary>
+        public DispatchChoices Choices { get; set; }
     }
 }

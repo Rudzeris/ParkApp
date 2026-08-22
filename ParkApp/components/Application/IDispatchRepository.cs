@@ -20,5 +20,8 @@ namespace ParkApp.components.Application
 
         /// <summary>Реквизиты для печати: наименование части, подписанты.</summary>
         Task<IDictionary<string, string>> GetPrintDetailsAsync();
+
+        /// <summary>Значения, которые можно выбрать в наряде. Ведутся в Excel.</summary>
+        Task<DispatchChoices> GetChoicesAsync();
     }
 }
