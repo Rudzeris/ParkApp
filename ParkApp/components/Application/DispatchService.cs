@@ -22,11 +22,13 @@ namespace ParkApp.components.Application
 
         private readonly IDispatchRepository _repo;
         private readonly CarService _cars;
+        private readonly PersonService _people;
 
-        public DispatchService(IDispatchRepository repo, CarService cars)
+        public DispatchService(IDispatchRepository repo, CarService cars, PersonService people)
         {
             _repo = repo;
             _cars = cars;
+            _people = people;
         }
 
         /// <summary>По умолчанию наряд составляют на завтра.</summary>
@@ -40,6 +42,7 @@ namespace ParkApp.components.Application
             var day = date.Date;
 
             var cars = await _cars.GetAllAsync();
+            var officials = await OfficialsAsync();
             var schedules = await _repo.GetSchedulesAsync();
             var entries = await _repo.GetByDateAsync(day);
             var details = await _repo.GetPrintDetailsAsync();
@@ -87,11 +90,14 @@ namespace ParkApp.components.Application
                     Schedule = schedule,
                     Plate = FirstPlate(car) ?? schedule.CarPlate,
                     IsSelected = inOrder || (plan.IsNew && schedule.RepeatDaily),
-                    GroupName = inOrder ? entry.GroupName : schedule.GroupName,
+
+                    // группа — это «куда относится» из карточки машины, её не выбирают
+                    GroupName = DispatchGroups.Normalize(car.Affiliation),
+
                     OperationGroup = inOrder ? entry.OperationGroup : schedule.OperationGroup,
                     Purpose = inOrder ? entry.Purpose : schedule.Purpose,
                     Route = inOrder ? entry.Route : schedule.Route,
-                    Assignment = inOrder ? entry.Assignment : schedule.Assignment,
+                    Assignment = Assignment(car, officials, inOrder ? entry.Assignment : schedule.Assignment),
                     Notes = inOrder ? entry.Notes : schedule.Notes,
                     DepartureAt = inOrder && entry.DepartureAt != default(DateTime)
                         ? entry.DepartureAt
@@ -113,6 +119,44 @@ namespace ParkApp.components.Application
         }
 
         /// <summary>
+        /// Должностные лица по номеру. Реестр людей может быть недоступен —
+        /// это не повод не дать составить наряд, просто графа останется пустой.
+        /// </summary>
+        private async Task<IDictionary<int, Person>> OfficialsAsync()
+        {
+            if (_people == null)
+                return new Dictionary<int, Person>();
+
+            try
+            {
+                return await _people.GetByIdAsync();
+            }
+            catch (Exception)
+            {
+                return new Dictionary<int, Person>();
+            }
+        }
+
+        /// <summary>
+        /// «В чьё распоряжение» — тоже данные машины: её должностное лицо
+        /// из таблицы людей, «должность звание Фамилия И.О.». Записанное
+        /// в наряде значение важнее: машину могли отдать другому.
+        /// </summary>
+        private static string Assignment(Car car, IDictionary<int, Person> officials, string stored)
+        {
+            if (!string.IsNullOrWhiteSpace(stored))
+                return stored;
+
+            if (car == null || !car.OfficialId.HasValue)
+                return null;
+
+            Person person;
+            return officials.TryGetValue(car.OfficialId.Value, out person)
+                ? PersonService.DescribeFull(person)
+                : null;
+        }
+
+        /// <summary>
         /// Дополняет списки тем, что уже стоит у машин. В таблице наряда выбирают
         /// только из списка, поэтому значение, записанное раньше или правкой файла
         /// в Excel, обязано в списке оказаться — иначе выбор его молча потеряет.
@@ -121,7 +165,6 @@ namespace ParkApp.components.Application
         {
             var choices = plan.Choices ?? (plan.Choices = new DispatchChoices());
 
-            choices.Include(DispatchChoices.GroupColumn, plan.Items.Select(i => i.GroupName));
             choices.Include(DispatchChoices.OperationGroupColumn, plan.Items.Select(i => i.OperationGroup));
             choices.Include(DispatchChoices.PurposeColumn, plan.Items.Select(i => i.Purpose));
             choices.Include(DispatchChoices.RouteColumn, plan.Items.Select(i => i.Route));
@@ -190,7 +233,6 @@ namespace ParkApp.components.Application
                 }
 
                 schedule.CarPlate = item.Plate;
-                schedule.GroupName = item.GroupName;
                 schedule.OperationGroup = item.OperationGroup;
                 schedule.Purpose = item.Purpose;
                 schedule.Route = item.Route;
@@ -233,8 +275,7 @@ namespace ParkApp.components.Application
                 CarPlate = FirstPlate(car),
                 DepartureTime = DefaultDeparture,
                 ReturnTime = DefaultReturn,
-                OperationGroup = string.IsNullOrWhiteSpace(operationGroup) ? "тр." : operationGroup,
-                GroupName = car.Affiliation
+                OperationGroup = string.IsNullOrWhiteSpace(operationGroup) ? "тр." : operationGroup
             };
         }
 

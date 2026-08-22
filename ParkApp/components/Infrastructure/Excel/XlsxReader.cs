@@ -169,13 +169,19 @@ namespace ParkApp.components.Infrastructure.Excel
             if (int.TryParse((string)cell.Attribute("s"), NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedStyle))
                 style = parsedStyle;
 
+            // у ячейки с формулой Excel хранит и формулу, и посчитанное значение:
+            // читаем значение, а формулу держим, чтобы вернуть её при перезаписи
+            var formulaElement = cell.Element(Main + "f");
+            var formula = formulaElement == null ? null : formulaElement.Value;
+
             if (type == "inlineStr")
             {
                 var inline = cell.Element(Main + "is");
                 if (inline == null)
                     return null;
 
-                return new RawCell(string.Concat(inline.Descendants(Main + "t").Select(t => t.Value)), true, style);
+                return new RawCell(
+                    string.Concat(inline.Descendants(Main + "t").Select(t => t.Value)), true, style, formula);
             }
 
             var valueElement = cell.Element(Main + "v");
@@ -189,16 +195,16 @@ namespace ParkApp.components.Infrastructure.Excel
                 int index;
                 if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out index)
                     && index >= 0 && index < sharedStrings.Count)
-                    return new RawCell(sharedStrings[index], true, style);
+                    return new RawCell(sharedStrings[index], true, style, formula);
 
                 return null;
             }
 
             if (type == "b")
-                return new RawCell(raw == "1" ? "ИСТИНА" : "ЛОЖЬ", true, style);
+                return new RawCell(raw == "1" ? "ИСТИНА" : "ЛОЖЬ", true, style, formula);
 
             // числа и даты: дата отличается от числа только стилем, поэтому его и храним
-            return new RawCell(raw, type == "str" || type == "e", style);
+            return new RawCell(raw, type == "str" || type == "e", style, formula);
         }
 
         private static List<string> ReadSharedStrings(ZipArchive archive)

@@ -5,35 +5,39 @@ using System.Linq;
 namespace ParkApp.components.Application
 {
     /// <summary>
-    /// Значения, которые можно выбрать в наряде. Руками в таблице наряда
-    /// ничего не набирают: набранное с клавиатуры расходится опечатками
-    /// («Перевозка л/с», «перевозка ЛС», «Перевозка личного состава»), а потом
-    /// не сходится ни в наряде, ни в путевом листе.
+    /// Подсказки для граф наряда, которых нет в таблице машин: группа
+    /// эксплуатации, цель, маршрут, «в чьё распоряжение», примечание.
+    ///
+    /// Всё, что про саму машину — марка, Г.Р.З., группа, должностное лицо, —
+    /// сюда не попадает: это данные машины, и они подставляются из её карточки.
+    /// Остальное вписывают руками, а список хранит уже введённое, чтобы одно
+    /// и то же не набирать каждый день и чтобы не плодить опечатки
+    /// («Перевозка л/с», «перевозка ЛС», «Перевозка личного состава»).
     ///
     /// Списки ведёт пользователь в Excel, на листе «Списки» файла нарядов —
     /// по столбцу на список. Приложение их только читает и дополняет теми
-    /// значениями, которые уже встречаются в данных: иначе выбор из списка
-    /// затёр бы то, что было записано раньше.
+    /// значениями, которые уже встречаются в данных.
     /// </summary>
     public class DispatchChoices
     {
-        public const string GroupColumn = "Группа";
         public const string OperationGroupColumn = "Группа эксплуатации";
         public const string PurposeColumn = "Для каких целей назначается";
         public const string RouteColumn = "Маршрут движения";
         public const string AssignmentColumn = "В чьё распоряжение";
         public const string NotesColumn = "Примечание";
 
-        /// <summary>Столбцы листа «Списки» — они же заголовки колонок в окне наряда.</summary>
+        /// <summary>
+        /// Столбцы листа «Списки» — они же заголовки колонок в окне наряда.
+        /// «Группы» здесь нет: она берётся из таблицы машин («Куда относится»).
+        /// </summary>
         public static readonly string[] Columns =
         {
-            GroupColumn, OperationGroupColumn, PurposeColumn,
+            OperationGroupColumn, PurposeColumn,
             RouteColumn, AssignmentColumn, NotesColumn
         };
 
         public DispatchChoices()
         {
-            Groups = new List<string>();
             OperationGroups = new List<string>();
             Purposes = new List<string>();
             Routes = new List<string>();
@@ -41,7 +45,6 @@ namespace ParkApp.components.Application
             Notes = new List<string>();
         }
 
-        public IList<string> Groups { get; set; }
         public IList<string> OperationGroups { get; set; }
         public IList<string> Purposes { get; set; }
         public IList<string> Routes { get; set; }
@@ -52,7 +55,6 @@ namespace ParkApp.components.Application
         {
             switch (column)
             {
-                case GroupColumn: return Groups;
                 case OperationGroupColumn: return OperationGroups;
                 case PurposeColumn: return Purposes;
                 case RouteColumn: return Routes;
@@ -66,7 +68,6 @@ namespace ParkApp.components.Application
         {
             switch (column)
             {
-                case GroupColumn: Groups = values; break;
                 case OperationGroupColumn: OperationGroups = values; break;
                 case PurposeColumn: Purposes = values; break;
                 case RouteColumn: Routes = values; break;
@@ -104,7 +105,6 @@ namespace ParkApp.components.Application
         {
             return new DispatchChoices
             {
-                Groups = new List<string> { "Группа боевых машин", "Группа машин обеспечения" },
                 OperationGroups = new List<string> { "тр.", "стр.", "уч.-бо." },
                 Purposes = new List<string>
                 {

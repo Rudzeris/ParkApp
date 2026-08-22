@@ -9,16 +9,14 @@ namespace ParkApp.components.ViewModel
     /// <summary>
     /// Строка наряда: машина, её время и постоянные отметки.
     ///
-    /// Руками в строке набирают только время — «06:00», как его называют
-    /// в парке. Группа, цель, маршрут и прочее выбираются из списков:
-    /// набранное с клавиатуры расходится опечатками и потом не сходится
-    /// ни в наряде, ни в путевом листе.
+    /// Что известно про машину — марка, Г.Р.З., группа, должностное лицо —
+    /// подставляется из её карточки и в строке не правится: это данные машины,
+    /// и заводят их там, где машину заводят. Остальное — группу эксплуатации,
+    /// цель, маршрут, примечание — вписывают, а уже введённое предлагается
+    /// списком, чтобы не набирать одно и то же каждый день.
     /// </summary>
     public class DispatchItemViewModel : ViewModelBase
     {
-        /// <summary>Первый пункт любого списка: «значения нет».</summary>
-        public const string Empty = "—";
-
         private readonly DispatchPlanItem _item;
         private readonly DispatchChoices _choices;
         private DateTime _date;
@@ -29,7 +27,6 @@ namespace ParkApp.components.ViewModel
             _date = date;
             _choices = choices ?? new DispatchChoices();
 
-            GroupOptions = Options(DispatchChoices.GroupColumn);
             OperationGroupOptions = Options(DispatchChoices.OperationGroupColumn);
             PurposeOptions = Options(DispatchChoices.PurposeColumn);
             RouteOptions = Options(DispatchChoices.RouteColumn);
@@ -37,18 +34,16 @@ namespace ParkApp.components.ViewModel
             NotesOptions = Options(DispatchChoices.NotesColumn);
         }
 
-        public IReadOnlyList<string> GroupOptions { get; private set; }
         public IReadOnlyList<string> OperationGroupOptions { get; private set; }
         public IReadOnlyList<string> PurposeOptions { get; private set; }
         public IReadOnlyList<string> RouteOptions { get; private set; }
         public IReadOnlyList<string> AssignmentOptions { get; private set; }
         public IReadOnlyList<string> NotesOptions { get; private set; }
 
+        /// <summary>Подсказки для графы: то, что уже вводили.</summary>
         private IReadOnlyList<string> Options(string column)
         {
-            var values = new List<string> { Empty };
-            values.AddRange(_choices.AllOf(column).Select(v => v.Trim()));
-            return values;
+            return _choices.AllOf(column).Select(v => v.Trim()).ToList();
         }
 
         public DispatchPlanItem Item
@@ -86,23 +81,15 @@ namespace ParkApp.components.ViewModel
             get { return string.IsNullOrWhiteSpace(_item.Plate) ? "—" : _item.Plate; }
         }
 
+        /// <summary>«Куда относится» из карточки машины. В наряде не правится.</summary>
         public string GroupName
         {
-            get { return Shown(_item.GroupName); }
-            set
-            {
-                var stored = Stored(value);
-                if (_item.GroupName == stored)
-                    return;
-
-                _item.GroupName = stored;
-                OnPropertyChanged("GroupName");
-            }
+            get { return string.IsNullOrWhiteSpace(_item.GroupName) ? "—" : _item.GroupName; }
         }
 
         public string OperationGroup
         {
-            get { return Shown(_item.OperationGroup); }
+            get { return _item.OperationGroup; }
             set
             {
                 var stored = Stored(value);
@@ -116,7 +103,7 @@ namespace ParkApp.components.ViewModel
 
         public string Purpose
         {
-            get { return Shown(_item.Purpose); }
+            get { return _item.Purpose; }
             set
             {
                 var stored = Stored(value);
@@ -130,7 +117,7 @@ namespace ParkApp.components.ViewModel
 
         public string Route
         {
-            get { return Shown(_item.Route); }
+            get { return _item.Route; }
             set
             {
                 var stored = Stored(value);
@@ -144,7 +131,7 @@ namespace ParkApp.components.ViewModel
 
         public string Assignment
         {
-            get { return Shown(_item.Assignment); }
+            get { return _item.Assignment; }
             set
             {
                 var stored = Stored(value);
@@ -158,7 +145,7 @@ namespace ParkApp.components.ViewModel
 
         public string Notes
         {
-            get { return Shown(_item.Notes); }
+            get { return _item.Notes; }
             set
             {
                 var stored = Stored(value);
@@ -232,15 +219,10 @@ namespace ParkApp.components.ViewModel
             get { return _item.ReturnAt.Date > _item.DepartureAt.Date ? "следующий день" : "в тот же день"; }
         }
 
-        /// <summary>В списке пустое значение — это «—», в данных — пустая ячейка.</summary>
-        private static string Shown(string value)
-        {
-            return string.IsNullOrWhiteSpace(value) ? Empty : value;
-        }
-
+        /// <summary>Пустая графа хранится как пустая ячейка, а не как пробелы.</summary>
         private static string Stored(string value)
         {
-            return string.IsNullOrWhiteSpace(value) || value == Empty ? null : value;
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
         private void Recalculate()

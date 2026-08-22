@@ -26,8 +26,6 @@ namespace ParkApp.components.Domain
         /// <summary>Печатать в путевом листе блок «Использование машины … разрешаю».</summary>
         public bool AllowOutsideOrder { get; set; }
 
-        /// <summary>Заголовок группы в наряде: машины идут в нём по группам.</summary>
-        public string GroupName { get; set; }
 
         /// <summary>Группа эксплуатации, обычно «тр.».</summary>
         public string OperationGroup { get; set; }

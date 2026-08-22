@@ -33,6 +33,23 @@ namespace ParkApp.components.Application
             return result;
         }
 
+        /// <summary>
+        /// «начальник штаба подполковник Иванов И.И.» — как в графе наряда
+        /// «в чьё распоряжение»: должность, звание и фамилия одной строкой.
+        /// </summary>
+        public static string DescribeFull(Person person)
+        {
+            if (person == null)
+                return null;
+
+            var parts = new[] { person.Position, person.Rank, person.FullName }
+                .Where(part => !string.IsNullOrWhiteSpace(part))
+                .Select(part => part.Trim());
+
+            var text = string.Join(" ", parts);
+            return text.Length > 0 ? text : null;
+        }
+
         /// <summary>«мл. сержант Иванов И.И.» — звание и ФИО одной строкой.</summary>
         public static string Describe(Person person)
         {

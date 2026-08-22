@@ -25,12 +25,13 @@ namespace ParkApp.components.Infrastructure.Excel
         /// <summary>Excel считает дни от 30.12.1899 (с учётом его же ошибки с 1900 годом).</summary>
         private static readonly DateTime SerialEpoch = new DateTime(1899, 12, 30);
 
-        private XlsxCell(string value, XlsxCellKind kind, bool isText = false, int style = 0)
+        private XlsxCell(string value, XlsxCellKind kind, bool isText = false, int style = 0, string formula = null)
         {
             Value = value;
             Kind = kind;
             IsText = isText;
             Style = style;
+            Formula = formula;
         }
 
         public string Value { get; private set; }
@@ -42,15 +43,18 @@ namespace ParkApp.components.Infrastructure.Excel
         /// <summary>Для Raw: индекс стиля из исходного файла — им держится формат даты.</summary>
         public int Style { get; private set; }
 
+        /// <summary>Для Raw: формула ячейки, если она была. Возвращается на место как есть.</summary>
+        public string Formula { get; private set; }
+
         /// <summary>
         /// Ячейка чужого столбца: приложение её не понимает, но обязано вернуть
         /// на место в том же виде — иначе дата в ней превратится в число.
         /// </summary>
-        public static XlsxCell Raw(string value, bool isText, int style)
+        public static XlsxCell Raw(string value, bool isText, int style, string formula = null)
         {
-            return string.IsNullOrEmpty(value)
+            return string.IsNullOrEmpty(value) && string.IsNullOrEmpty(formula)
                 ? Empty
-                : new XlsxCell(value, XlsxCellKind.Raw, isText, style);
+                : new XlsxCell(value, XlsxCellKind.Raw, isText, style, formula);
         }
 
         public static readonly XlsxCell Empty = new XlsxCell(null, XlsxCellKind.Empty);
