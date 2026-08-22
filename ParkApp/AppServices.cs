@@ -47,7 +47,7 @@ namespace ParkApp
             People = new PersonService(personRepository);
             Lookups = new LookupService(lookupRepository);
             Fines = new FineService(fineRepository);
-            Dispatch = new DispatchService(dispatchRepository, Cars);
+            Dispatch = new DispatchService(dispatchRepository, Cars, People);
 
             Scans = new FileScanStorage();
             FileDialogs = new WpfFileDialogService();

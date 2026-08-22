@@ -12,16 +12,25 @@ namespace ParkApp.components.Infrastructure.Excel
     /// </summary>
     public class RawCell
     {
-        public RawCell(string value, bool isText, int style)
+        public RawCell(string value, bool isText, int style, string formula = null)
         {
             Value = value;
             IsText = isText;
             Style = style;
+            Formula = formula;
         }
 
         public string Value { get; private set; }
         public bool IsText { get; private set; }
         public int Style { get; private set; }
+
+        /// <summary>
+        /// Формула ячейки без «=», если она была. В рабочих книгах заказчика
+        /// графы заполняют ссылками на другой лист («Люди!A$1»), и при
+        /// перезаписи ссылка обязана вернуться на место: иначе живая связь
+        /// молча превратится в разовый текст.
+        /// </summary>
+        public string Formula { get; private set; }
     }
 
     /// <summary>

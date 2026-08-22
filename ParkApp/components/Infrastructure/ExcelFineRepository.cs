@@ -299,7 +299,7 @@ namespace ParkApp.components.Infrastructure
                     for (var i = 0; i < cells.Length && i < raw.Length; i++)
                     {
                         if (raw[i] != null)
-                            cells[i] = XlsxCell.Raw(raw[i].Value, raw[i].IsText, raw[i].Style);
+                            cells[i] = XlsxCell.Raw(raw[i].Value, raw[i].IsText, raw[i].Style, raw[i].Formula);
                     }
                 }
 

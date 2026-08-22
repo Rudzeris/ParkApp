@@ -102,6 +102,7 @@
         <Compile Include="components\Application\AppSection.cs" />
         <Compile Include="components\Application\CarService.cs" />
         <Compile Include="components\Application\DispatchChoices.cs" />
+    <Compile Include="components\Application\DispatchGroups.cs" />
     <Compile Include="components\Application\DispatchPlan.cs" />
         <Compile Include="components\Application\DispatchService.cs" />
         <Compile Include="components\Application\FineFilter.cs" />

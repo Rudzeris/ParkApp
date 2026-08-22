@@ -252,6 +252,12 @@
     font-weight: 700;
   }
 
+  .from-car {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    border-bottom: 1px dotted var(--rule);
+  }
+
   .plate {
     font-family: "PT Mono", ui-monospace, monospace;
     font-size: var(--step--2);
@@ -446,7 +452,7 @@
     <div class="eyebrow">ParkApp · предпросмотр</div>
     <h1>Наряд на выход техники</h1>
     <p class="lede">
-      Так выглядит работа в приложении: отметить машины в наряд, выбрать цель и маршрут из списков,
+      Так выглядит работа в приложении: отметить машины в наряд, вписать цель и маршрут,
       поправить время — и получить наряд и путевые листы. Здесь всё живое, можно потрогать с телефона.
       Документы внизу перерисовываются сразу.
     </p>
@@ -492,8 +498,11 @@
       Приложение печатает это в .docx по вашим же файлам — здесь показано, что подставляется и куда.
     </p>
     <ul>
-      <li><b>Списки.</b> Группа, цель, маршрут и «в чьё распоряжение» только выбираются — руками набирают
-        одно время. Значения ведутся в Excel, на листе «Списки» файла нарядов.</li>
+      <li><b>Из карточки машины.</b> Марка, Г.Р.З., группа («куда относится») и «в чьё распоряжение»
+        (должностное лицо машины из таблицы людей) подставляются сами и в наряде не правятся —
+        заводят их там же, где заводят машину.</li>
+      <li><b>Остальное вписывают.</b> Гр. эксплуатации, цель, маршрут, примечание — их в таблице машин
+        нет. Уже введённое предлагается подсказкой, чтобы не набирать одно и то же каждый день.</li>
       <li><b>Повторять.</b> Машина с этой отметкой попадает в новый наряд сама. Если наряд на дату уже
         сохранён и машину из него сняли — она не вернётся.</li>
       <li><b>Вне наряда.</b> Блок «Использование машины вне наряда … разрешаю» печатается только у машин
@@ -514,13 +523,15 @@
                 "июля","августа","сентября","октября","ноября","декабря"];
 
   // Списки — те же, что приложение читает с листа «Списки»
+  // Подсказки для граф, которых нет в карточке машины. Вписать можно своё.
   var LISTS = {
-    group: ["—", "Группа боевых машин", "Группа машин обеспечения"],
-    op: ["—", "тр.", "стр.", "уч.-бо."],
-    purpose: ["—", "Перевозка личного состава", "Перевозка материальных средств",
+    op: ["тр.", "стр.", "уч.-бо."],
+    purpose: ["Перевозка личного состава", "Перевозка материальных средств",
               "Обеспечение занятий", "Хозяйственные нужды"],
-    route: ["—", "ППД — полигон — ППД", "ППД — город — ППД", "ППД — станция — ППД"],
-    assign: ["—", "начальник штаба", "начальник автослужбы", "командир 1 роты", "дежурный по части"]
+    route: ["ППД — полигон — ППД", "ППД — город — ППД", "ППД — станция — ППД"],
+    assign: ["начальник штаба подполковник Антонов А.А.",
+             "начальник автомобильной службы майор Иванов И.И.",
+             "командир 1 роты капитан Кузнецов К.К."]
   };
 
   var DETAILS = {
@@ -546,22 +557,35 @@
     cargo: "л/с"
   };
 
+  // Групп машин две, и в наряде они печатаются в этом порядке,
+  // а не по алфавиту.
+  var ГРУППА_ОБЕСПЕЧЕНИЕ = "Обеспечение служебной деятельности";
+  var ГРУППА_ДЕЖУРНЫЕ = "Дежурные средства";
+  var ГРУППЫ = [ГРУППА_ОБЕСПЕЧЕНИЕ, ГРУППА_ДЕЖУРНЫЕ];
+
+  // «group» и «assign» приходят из карточки машины: «куда относится»
+  // и должностное лицо из таблицы людей. В наряде их не выбирают.
   var CARS = [
-    { brand: "КамАЗ-4310", plate: "1234 АБ 34", group: "Группа боевых машин",
+    { brand: "КамАЗ-4310", plate: "1234 АБ 34", group: ГРУППА_ОБЕСПЕЧЕНИЕ,
+      official: "начальник штаба подполковник Антонов А.А.",
       op: "тр.", purpose: "Перевозка личного состава", route: "ППД — полигон — ППД",
-      assign: "начальник штаба", from: "06:00", to: "06:00", repeat: true, outside: false },
-    { brand: "Урал-4320", plate: "5678 ВГ 34", group: "Группа боевых машин",
+      from: "06:00", to: "06:00", repeat: true, outside: false },
+    { brand: "Урал-4320", plate: "5678 ВГ 34", group: ГРУППА_ОБЕСПЕЧЕНИЕ,
+      official: "начальник штаба подполковник Антонов А.А.",
       op: "тр.", purpose: "Перевозка материальных средств", route: "ППД — станция — ППД",
-      assign: "—", from: "06:00", to: "22:00", repeat: true, outside: false },
-    { brand: "УАЗ-3909", plate: "У 123 Б 12", group: "Группа машин обеспечения",
+      from: "06:00", to: "22:00", repeat: true, outside: false },
+    { brand: "УАЗ-3909", plate: "У 123 Б 12", group: ГРУППА_ДЕЖУРНЫЕ,
+      official: "начальник автомобильной службы майор Иванов И.И.",
       op: "тр.", purpose: "Хозяйственные нужды", route: "ППД — город — ППД",
-      assign: "дежурный по части", from: "07:00", to: "07:00", repeat: false, outside: true },
-    { brand: "Lada Vesta", plate: "А 456 ВС 34", group: "Группа машин обеспечения",
+      from: "07:00", to: "07:00", repeat: false, outside: true },
+    { brand: "Lada Vesta", plate: "А 456 ВС 34", group: ГРУППА_ДЕЖУРНЫЕ,
+      official: "начальник автомобильной службы майор Иванов И.И.",
       op: "тр.", purpose: "Обеспечение занятий", route: "ППД — полигон — ППД",
-      assign: "начальник автослужбы", from: "05:00", to: "05:00", repeat: false, outside: true },
-    { brand: "ГАЗ-66", plate: "7890 ДЕ 34", group: "Группа боевых машин",
+      from: "05:00", to: "05:00", repeat: false, outside: true },
+    { brand: "ГАЗ-66", plate: "7890 ДЕ 34", group: ГРУППА_ОБЕСПЕЧЕНИЕ,
+      official: "командир 1 роты капитан Кузнецов К.К.",
       op: "стр.", purpose: "Обеспечение занятий", route: "ППД — полигон — ППД",
-      assign: "командир 1 роты", from: "06:00", to: "22:00", repeat: false, outside: false }
+      from: "06:00", to: "22:00", repeat: false, outside: false }
   ];
 
   var state = {
@@ -575,6 +599,7 @@
       var copy = {};
       for (var k in c) if (Object.prototype.hasOwnProperty.call(c, k)) copy[k] = c[k];
       copy.on = c.repeat;                    // новый наряд: отмечены «повторяющиеся»
+      copy.assign = c.official;              // «в чьё распоряжение» — из карточки машины
       return copy;
     })
   };
@@ -647,14 +672,26 @@
 
   // ── таблица наряда ───────────────────────────────────────
 
-  function selectBox(list, value, index, key) {
-    var html = '<select data-i="' + index + '" data-k="' + key + '" aria-label="' + esc(key) + '">';
-    var values = LISTS[list].slice();
-    if (value && values.indexOf(value) < 0) values.push(value);   // значение из данных не теряем
-    for (var i = 0; i < values.length; i++) {
-      html += '<option' + (values[i] === value ? " selected" : "") + ">" + esc(values[i]) + "</option>";
+  /**
+   * Графа, которой нет в карточке машины: вписывают руками, а уже введённое
+   * предлагается подсказкой. В приложении это редактируемый ComboBox,
+   * в браузере — поле с datalist: ведёт себя так же.
+   */
+  function textBox(list, value, index, key) {
+    var id = "list-" + list;
+    return '<input type="text" list="' + id + '" data-i="' + index + '" data-k="' + key +
+           '" value="' + esc(text(value)) + '" aria-label="' + esc(key) + '">';
+  }
+
+  function dataLists() {
+    var html = "";
+    for (var name in LISTS) {
+      if (!Object.prototype.hasOwnProperty.call(LISTS, name)) continue;
+      html += '<datalist id="list-' + name + '">';
+      for (var i = 0; i < LISTS[name].length; i++) html += "<option>" + esc(LISTS[name][i]) + "</option>";
+      html += "</datalist>";
     }
-    return html + "</select>";
+    return html;
   }
 
   function drawRows() {
@@ -665,9 +702,9 @@
         '<div class="row' + (c.on ? " on" : "") + '">' +
           '<input type="checkbox" data-i="' + i + '" data-k="on"' + (c.on ? " checked" : "") +
             ' aria-label="В наряд: ' + esc(c.brand) + '">' +
-          '<div class="car"><b>' + esc(c.brand) + '</b><span class="plate">' + esc(c.plate) + "</span></div>" +
+          '<div class="car"><b>' + esc(c.brand) + '</b><span class="plate">' + esc(c.plate) + "</span>" +
+            '<span class="from-car" title="Из карточки машины: «куда относится»">' + esc(c.group) + "</span></div>" +
           '<div class="fields">' +
-            cell("Группа", "group", c.group, i) +
             cell("Гр. эксп.", "op", c.op, i) +
             cell("Для каких целей", "purpose", c.purpose, i) +
             cell("Маршрут", "route", c.route, i) +
@@ -688,12 +725,12 @@
           "</div>" +
         "</div>";
     }
-    el.rows.innerHTML = html;
+    el.rows.innerHTML = html + dataLists();
   }
 
   function cell(caption, key, value, index) {
     return '<div class="cell"><span class="cap">' + esc(caption) + "</span>" +
-           selectBox(key, value, index, key) + "</div>";
+           textBox(key, value, index, key) + "</div>";
   }
 
   // ── наряд ────────────────────────────────────────────────
@@ -714,6 +751,14 @@
       var g = text(c.group) || "Без группы";
       if (!seen[g]) { seen[g] = []; groups.push(g); }
       seen[g].push(c);
+    });
+
+    // порядок групп в наряде — их собственный, а не алфавитный
+    groups.sort(function (a, b) {
+      var ai = ГРУППЫ.indexOf(a), bi = ГРУППЫ.indexOf(b);
+      if (ai < 0) ai = ГРУППЫ.length;
+      if (bi < 0) bi = ГРУППЫ.length;
+      return ai !== bi ? ai - bi : a.localeCompare(b, "ru");
     });
 
     var body = "", n = 0;
@@ -869,7 +914,10 @@
 
   function draw() {
     drawRows();
+    drawDocument();
+  }
 
+  function drawDocument() {
     if (state.view === "order") {
       el.pager.hidden = true;
       drawOrder();
@@ -919,16 +967,27 @@
 
   // ── события ──────────────────────────────────────────────
 
-  el.rows.addEventListener("change", function (e) {
+  function apply(e, redraw) {
     var t = e.target;
-    if (!t.dataset || t.dataset.i === undefined) return;
+    if (!t.dataset || t.dataset.i === undefined) return false;
     var car = state.cars[+t.dataset.i], key = t.dataset.k;
 
     if (t.type === "checkbox") car[key] = t.checked;
     else if (key === "from" || key === "to") car[key] = minutes(t.value) === null ? car[key] : timeText(t.value);
     else car[key] = t.value;
 
-    draw();
+    return true;
+  }
+
+  // при наборе текста строку не перерисовываем — иначе поле теряет курсор
+  el.rows.addEventListener("input", function (e) {
+    if (e.target.type === "text" && e.target.dataset.k !== "from" && e.target.dataset.k !== "to") {
+      if (apply(e)) drawDocument();
+    }
+  });
+
+  el.rows.addEventListener("change", function (e) {
+    if (apply(e)) draw();
   });
 
   el.date.addEventListener("change", function () {

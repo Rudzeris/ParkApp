@@ -31,7 +31,7 @@ namespace ParkApp.components.Infrastructure
 
         private static readonly string[] ScheduleHeaders =
         {
-            "VIN", "Г.Р.З.", "Группа", "Группа эксплуатации", "Для каких целей назначается",
+            "VIN", "Г.Р.З.", "Группа эксплуатации", "Для каких целей назначается",
             "Маршрут движения", "В чьё распоряжение", "Время выезда", "Время возвращения",
             "Повторять ежедневно", "Использование вне наряда", "Примечание"
         };
@@ -242,7 +242,6 @@ namespace ParkApp.components.Infrastructure
                 throw new InvalidOperationException("В листе графиков не найден столбец «VIN».");
 
             var plateColumn = sheet.Column(PlateNames);
-            var groupColumn = sheet.Column("Группа");
             var operationColumn = sheet.Column("Группа эксплуатации");
             var purposeColumn = sheet.Column("Для каких целей назначается", "Цель");
             var routeColumn = sheet.Column("Маршрут движения", "Маршрут");
@@ -265,7 +264,6 @@ namespace ParkApp.components.Infrastructure
                 {
                     CarVin = vin,
                     CarPlate = SheetTable.GetString(row, plateColumn),
-                    GroupName = SheetTable.GetString(row, groupColumn),
                     OperationGroup = SheetTable.GetString(row, operationColumn),
                     Purpose = SheetTable.GetString(row, purposeColumn),
                     Route = SheetTable.GetString(row, routeColumn),
@@ -390,13 +388,11 @@ namespace ParkApp.components.Infrastructure
                 .ToList();
 
             var scheduleRows = schedules
-                .OrderBy(s => s.GroupName)
-                .ThenBy(s => s.CarPlate)
+                .OrderBy(s => s.CarPlate)
                 .Select(s => (IList<XlsxCell>)new List<XlsxCell>
                 {
                     XlsxCell.Text(s.CarVin),
                     XlsxCell.Text(s.CarPlate),
-                    XlsxCell.Text(s.GroupName),
                     XlsxCell.Text(s.OperationGroup),
                     XlsxCell.Text(s.Purpose),
                     XlsxCell.Text(s.Route),

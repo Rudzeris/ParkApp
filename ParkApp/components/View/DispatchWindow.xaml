@@ -6,20 +6,29 @@
 
     <Window.Resources>
         <!--
-            Значения в наряде выбирают из списка, а не набирают: набранное
-            руками расходится опечатками и потом не сходится ни в наряде,
-            ни в путевом листе. Списки ведутся в Excel, на листе «Списки».
+            Графы, которых нет в карточке машины, вписывают — но уже введённое
+            предлагается списком, чтобы одно и то же не набирать каждый день
+            и чтобы не плодить опечатки. Отсюда IsEditable="True": можно и
+            выбрать, и написать своё.
 
             ComboBox стоит прямо в ячейке, а не появляется по двойному щелчку:
             наряд заполняют сразу по многим строкам, и лишний щелчок на каждую
             ячейку заметен.
         -->
         <Style x:Key="CellBox" TargetType="ComboBox">
-            <Setter Property="IsEditable" Value="False" />
+            <Setter Property="IsEditable" Value="True" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- данные машины: показываем, но не даём править в наряде -->
+        <Style x:Key="CarText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
         </Style>
     </Window.Resources>
 
@@ -63,7 +72,7 @@
             </StatusBarItem>
         </StatusBar>
 
-        <DataGrid Margin="6"
+        <DataGrid x:Name="Cars" Margin="6"
                   ItemsSource="{Binding Items}"
                   SelectedItem="{Binding SelectedItem}"
                   AutoGenerateColumns="False"
@@ -72,19 +81,31 @@
                   HeadersVisibility="Column"
                   GridLinesVisibility="All">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="В наряд" Width="65"
-                                        Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                <!--
+                    Галочка живая с первого щелчка. У DataGridCheckBoxColumn
+                    первый щелчок только входит в режим правки, а отмечает
+                    второй — на полусотне машин это лишняя сотня щелчков.
+                -->
+                <DataGridTemplateColumn Header="В наряд" Width="65">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                      Click="OnMarkClick" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
                 <DataGridTextColumn Header="Марка машины" Width="140" IsReadOnly="True"
                                     Binding="{Binding Brand}" />
                 <DataGridTextColumn Header="Г.Р.З." Width="110" IsReadOnly="True"
                                     Binding="{Binding Plate}" />
 
+                <!-- «Куда относится» из карточки машины -->
                 <DataGridTemplateColumn Header="Группа" Width="130">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ComboBox Style="{StaticResource CellBox}"
-                                      ItemsSource="{Binding GroupOptions}"
-                                      SelectedItem="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource CarText}" Text="{Binding GroupName}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -94,7 +115,7 @@
                         <DataTemplate>
                             <ComboBox Style="{StaticResource CellBox}"
                                       ItemsSource="{Binding OperationGroupOptions}"
-                                      SelectedItem="{Binding OperationGroup, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding OperationGroup, UpdateSourceTrigger=LostFocus}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -104,7 +125,7 @@
                         <DataTemplate>
                             <ComboBox Style="{StaticResource CellBox}"
                                       ItemsSource="{Binding PurposeOptions}"
-                                      SelectedItem="{Binding Purpose, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding Purpose, UpdateSourceTrigger=LostFocus}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -114,17 +135,18 @@
                         <DataTemplate>
                             <ComboBox Style="{StaticResource CellBox}"
                                       ItemsSource="{Binding RouteOptions}"
-                                      SelectedItem="{Binding Route, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding Route, UpdateSourceTrigger=LostFocus}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- по умолчанию — должностное лицо машины из таблицы людей -->
                 <DataGridTemplateColumn Header="В чьё распоряжение" Width="180">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ComboBox Style="{StaticResource CellBox}"
                                       ItemsSource="{Binding AssignmentOptions}"
-                                      SelectedItem="{Binding Assignment, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding Assignment, UpdateSourceTrigger=LostFocus}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -147,7 +169,7 @@
                         <DataTemplate>
                             <ComboBox Style="{StaticResource CellBox}"
                                       ItemsSource="{Binding NotesOptions}"
-                                      SelectedItem="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding Notes, UpdateSourceTrigger=LostFocus}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

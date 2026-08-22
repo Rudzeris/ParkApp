@@ -255,13 +255,30 @@ namespace ParkApp.components.Infrastructure.Excel
             var reference = ColumnName(columnIndex) + rowNumber.ToString(CultureInfo.InvariantCulture);
             var style = styleOverride ?? (cell.Kind == XlsxCellKind.Raw ? cell.Style : StyleFor(cell.Kind));
             var asText = cell.Kind == XlsxCellKind.Text || (cell.Kind == XlsxCellKind.Raw && cell.IsText);
+            var formula = cell.Kind == XlsxCellKind.Raw ? cell.Formula : null;
 
             builder.Append("<c r=\"").Append(reference).Append("\"");
 
             if (style != 0)
                 builder.Append(" s=\"").Append(style).Append("\"");
 
-            if (asText)
+            // Ячейка со ссылкой на другой лист возвращается формулой, а не её
+            // результатом: иначе живая связь превратилась бы в разовый текст.
+            // Встроенная строка тут не годится — с формулой Excel её не примет,
+            // поэтому текстовый результат пишется как t="str".
+            if (!string.IsNullOrEmpty(formula))
+            {
+                if (asText)
+                    builder.Append(" t=\"str\"");
+
+                builder.Append("><f>").Append(Escape(formula)).Append("</f>");
+
+                if (!string.IsNullOrEmpty(cell.Value))
+                    builder.Append("<v>").Append(Escape(cell.Value)).Append("</v>");
+
+                builder.Append("</c>");
+            }
+            else if (asText)
             {
                 builder.Append(" t=\"inlineStr\"><is><t xml:space=\"preserve\">")
                        .Append(Escape(cell.Value))

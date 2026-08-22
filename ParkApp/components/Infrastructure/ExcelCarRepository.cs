@@ -343,7 +343,7 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Text("94/128"), XlsxCell.Text("316300E0012345"), XlsxCell.Text("316300E0012345"),
                     XlsxCell.Text("ПФМ-001"), XlsxCell.Text("16 ОР 123456"), XlsxCell.Text("9902 123456"),
                     XlsxCell.Text("ХХХ0123456789"), XlsxCell.Text("DK-2026-001"),
-                    XlsxCell.Text("Гараж"), XlsxCell.Text("ППД"), XlsxCell.Number(1),
+                    XlsxCell.Text(DispatchGroups.Service), XlsxCell.Text("ППД"), XlsxCell.Number(1),
                     XlsxCell.Text("штатная"), XlsxCell.Empty, XlsxCell.Number(5),
                     XlsxCell.Text("легковой универсал"), XlsxCell.Text("зелёный"), XlsxCell.Number(2693),
                     XlsxCell.Number(2650), XlsxCell.Number(2070), XlsxCell.Empty, XlsxCell.Text("ВАИ-77"),
@@ -356,7 +356,7 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Text("191/260"), XlsxCell.Text("53500J0000123"), XlsxCell.Empty,
                     XlsxCell.Text("ПФМ-002"), XlsxCell.Empty, XlsxCell.Text("9903 654321"),
                     XlsxCell.Empty, XlsxCell.Empty,
-                    XlsxCell.Text("Обеспечение"), XlsxCell.Text("ВО"), XlsxCell.Number(2),
+                    XlsxCell.Text(DispatchGroups.Duty), XlsxCell.Text("ВО"), XlsxCell.Number(2),
                     XlsxCell.Text("штатная"), XlsxCell.Empty, XlsxCell.Number(3),
                     XlsxCell.Text("грузовой"), XlsxCell.Text("хаки"), XlsxCell.Number(11760),
                     XlsxCell.Number(15850), XlsxCell.Number(9200), XlsxCell.Text("тент"), XlsxCell.Empty,
@@ -370,7 +370,7 @@ namespace ParkApp.components.Infrastructure
                     XlsxCell.Empty, XlsxCell.Empty, XlsxCell.Empty,
                     XlsxCell.Empty, XlsxCell.Empty, XlsxCell.Empty,
                     XlsxCell.Empty, XlsxCell.Empty,
-                    XlsxCell.Text("Гараж"), XlsxCell.Text("ППД"), XlsxCell.Number(3),
+                    XlsxCell.Text(DispatchGroups.Service), XlsxCell.Text("ППД"), XlsxCell.Number(3),
                     XlsxCell.Text("вне штата"), XlsxCell.Text("да"), XlsxCell.Number(13),
                     XlsxCell.Text("автобус"), XlsxCell.Empty, XlsxCell.Empty,
                     XlsxCell.Empty, XlsxCell.Empty, XlsxCell.Empty, XlsxCell.Empty,
@@ -383,7 +383,7 @@ namespace ParkApp.components.Infrastructure
             {
                 new XlsxSheet(SheetName, headers, rows),
                 XlsxSheet.Lookup(ExcelLookupRepository.AffiliationSheetName,
-                    new[] { "Гараж", "Обеспечение" }),
+                    new[] { DispatchGroups.Service, DispatchGroups.Duty }),
                 XlsxSheet.Lookup(ExcelLookupRepository.VehicleTypeSheetName,
                     new[] { "легковой седан", "легковой универсал", "автобус", "грузовой" })
             });

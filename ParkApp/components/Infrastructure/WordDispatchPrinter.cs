@@ -93,9 +93,8 @@ namespace ParkApp.components.Infrastructure
             var rows = new List<TemplateRow>();
             var number = 0;
 
-            var groups = items
-                .GroupBy(i => (i.GroupName ?? string.Empty).Trim())
-                .OrderBy(g => g.Key, StringComparer.CurrentCulture);
+            var groups = DispatchGroups.InOrder(
+                items.GroupBy(i => (i.GroupName ?? string.Empty).Trim()));
 
             foreach (var group in groups)
             {
