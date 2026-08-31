@@ -5,8 +5,7 @@ using ParkApp.components.Domain;
 
 namespace ParkApp.components.Application
 {
-    public interface ICarRepository : IRepository<Car>
+    public interface IFineRecordRepository : IRepository<FineRecord>
     {
     }
-
 }

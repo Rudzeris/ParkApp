@@ -2,6 +2,7 @@ using System.Windows;
 using ParkApp.components.Application;
 using ParkApp.components.Infrastructure;
 using ParkApp.components.ViewModel;
+using ParkApp.Windows;
 
 namespace ParkApp
 {
@@ -14,13 +15,13 @@ namespace ParkApp
         {
             base.OnStartup(e);
 
-            ICarRepository repo = new JsonCarRepository();
+            var repo = new JsonFineRecordRepository();
 
-            CarService carService = new CarService(repo);
+            var service = new FineService(repo);
 
-            var vm = new CarListViewModel(carService);
+            var vm = new FineListViewModel(service);
 
-            var window = new MainWindow()
+            var window = new FineWindow()
             {
                 DataContext = vm
             };

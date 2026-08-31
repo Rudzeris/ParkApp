@@ -1,0 +1,19 @@
+﻿<Window x:Class="ParkApp.Windows.FineWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:ParkApp.Windows"
+        mc:Ignorable="d"
+        Title="FineWindows" Height="450" Width="800">
+    <Grid>
+        <ListView ItemsSource="{Binding FineRecords}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Модель" DisplayMemberBinding="{Binding CarBrand}" />
+                    <GridViewColumn Header="ГРЗ" DisplayMemberBinding="{Binding Plate}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

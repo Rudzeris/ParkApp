@@ -66,26 +66,31 @@
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
         </ApplicationDefinition>
-        <Page Include="MainWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-            <SubType>Designer</SubType>
-        </Page>
         <Compile Include="App.xaml.cs">
             <DependentUpon>App.xaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
         <Compile Include="components\Application\CarService.cs" />
+        <Compile Include="components\Application\FineService.cs" />
         <Compile Include="components\Application\ICarRepository.cs" />
+        <Compile Include="components\Application\IFineRecordRepository.cs" />
+        <Compile Include="components\Application\IRepository.cs" />
         <Compile Include="components\Domain\Car.cs" />
         <Compile Include="components\Domain\CarNumber.cs" />
+        <Compile Include="components\Domain\FineRecord.cs" />
         <Compile Include="components\Domain\Location.cs" />
         <Compile Include="components\Domain\NumberType.cs" />
         <Compile Include="components\Infrastructure\JsonCarRepository.cs" />
+        <Compile Include="components\Infrastructure\JsonFineRecordRepository.cs" />
         <Compile Include="components\ViewModel\CarListViewModel.cs" />
+        <Compile Include="components\ViewModel\FineListViewModel.cs" />
         <Compile Include="components\ViewModel\ViewModelBase.cs" />
-        <Compile Include="MainWindow.xaml.cs">
-            <DependentUpon>MainWindow.xaml</DependentUpon>
-            <SubType>Code</SubType>
+        <Compile Include="Windows\FineWindow.xaml.cs">
+          <DependentUpon>FineWindow.xaml</DependentUpon>
+        </Compile>
+        <Compile Include="Windows\MainWindow.xaml.cs">
+          <DependentUpon>MainWindow.xaml</DependentUpon>
+          <SubType>Code</SubType>
         </Compile>
     </ItemGroup>
     <ItemGroup>
@@ -105,6 +110,13 @@
     <ItemGroup>
         <None Include="App.config"/>
         <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
+      <Page Include="Windows\FineWindow.xaml" />
+      <Page Include="Windows\MainWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <SubType>Designer</SubType>
+      </Page>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
