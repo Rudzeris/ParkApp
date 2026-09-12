@@ -1,0 +1,96 @@
+<Window x:Class="ParkApp.components.View.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ParkApp.components.ViewModel"
+        xmlns:v="clr-namespace:ParkApp.components.View"
+        Title="Автопарк" Height="720" Width="1320"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!--
+            Какой разметкой рисовать модель экрана — знает только View.
+            Вкладка про это не знает: она держит модель, а вид подбирается сам.
+        -->
+        <DataTemplate DataType="{x:Type vm:CarListViewModel}">
+            <v:CarsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FineListViewModel}">
+            <v:FinesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FineEditViewModel}">
+            <v:FineEditView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DispatchViewModel}">
+            <v:DispatchView />
+        </DataTemplate>
+
+        <!--
+            Заголовок вкладки: название и крестик. За него же её и тащат,
+            когда хотят вынести в отдельное окно.
+        -->
+        <DataTemplate x:Key="TabHeader">
+            <StackPanel Orientation="Horizontal"
+                        ToolTip="Потяните вкладку вниз, чтобы открыть её отдельным окном">
+                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Button Content="×" Command="{Binding CloseCommand}"
+                        Width="18" Height="18" Padding="0" FontSize="13"
+                        BorderThickness="0" Background="Transparent"
+                        ToolTip="Закрыть вкладку" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <ToolBarTray DockPanel.Dock="Top"
+                     Visibility="{Binding HasSections, Converter={StaticResource BoolToVisibility}}">
+            <ToolBar>
+                <ItemsControl ItemsSource="{Binding Main.Sections}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Title}" Command="{Binding Open}"
+                                    Padding="12,2" Margin="0,0,4,0" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Separator />
+                <Button Content="Настройки" Command="{Binding Main.OpenSettingsCommand}" Padding="12,2" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <Grid>
+            <TextBlock Margin="24" TextWrapping="Wrap" Foreground="#777" FontSize="14"
+                       VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center"
+                       Visibility="{Binding Shell.IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                Откройте раздел кнопкой сверху.<LineBreak />
+                Разделы открываются вкладками, а вкладку можно вытащить мышью — она станет отдельным окном.
+            </TextBlock>
+
+            <TabControl x:Name="Tabs" Margin="4"
+                        ItemsSource="{Binding Shell.Documents}"
+                        SelectedItem="{Binding Shell.Selected}"
+                        ItemTemplate="{StaticResource TabHeader}">
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding Content}" />
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem">
+                        <EventSetter Event="PreviewMouseLeftButtonDown" Handler="OnTabPressed" />
+                        <EventSetter Event="PreviewMouseMove" Handler="OnTabDragged" />
+                        <EventSetter Event="PreviewMouseLeftButtonUp" Handler="OnTabReleased" />
+                    </Style>
+                </TabControl.ItemContainerStyle>
+            </TabControl>
+        </Grid>
+
+    </DockPanel>
+</Window>

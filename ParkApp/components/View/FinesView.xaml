@@ -1,8 +1,6 @@
-<Window x:Class="ParkApp.components.View.FinesWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Книга постановлений" Height="640" Width="1300"
-        WindowStartupLocation="CenterOwner">
+<UserControl x:Class="ParkApp.components.View.FinesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <DockPanel>
 
         <ToolBarTray DockPanel.Dock="Top">
@@ -81,12 +79,36 @@
             </StatusBarItem>
         </StatusBar>
 
-        <ListView Margin="6"
+        <ListView x:Name="Rows" Margin="6"
                   ItemsSource="{Binding Fines}"
                   SelectedItem="{Binding SelectedFine}">
             <ListView.InputBindings>
                 <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding EditCommand}" />
             </ListView.InputBindings>
+
+            <!--
+                Меню висит на списке, а не на строке: у меню строки
+                DataContext — сама строка, а команды живут в модели окна.
+            -->
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Изменить" Command="{Binding EditCommand}" />
+                    <MenuItem Header="Удалить" Command="{Binding DeleteCommand}" />
+                    <Separator />
+                    <MenuItem Header="Открыть скан постановления" Command="{Binding OpenScanCommand}" />
+                </ContextMenu>
+            </ListView.ContextMenu>
+
+            <!--
+                Правая кнопка сначала выделяет строку, а потом показывает меню:
+                иначе команда применилась бы к строке, выделенной до этого,
+                а человек видит меню над той, по которой щёлкнул.
+            -->
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="OnRowRightClick" />
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="№ п/п" Width="50"
@@ -124,4 +146,4 @@
         </ListView>
 
     </DockPanel>
-</Window>
+</UserControl>

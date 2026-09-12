@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Windows;
 using ParkApp.components.ViewModel;
 
@@ -10,15 +11,15 @@ namespace ParkApp.components.View
     /// </summary>
     public class WpfFineDialogService : IFineDialogService
     {
-        public bool ShowEditor(FineEditViewModel viewModel)
+        public void OpenEditor(FineEditViewModel viewModel)
         {
-            var window = new FineEditWindow(viewModel);
+            // у каждого редактора свой ключ: записей можно открыть сколько угодно,
+            // в отличие от разделов, которые показываются одной вкладкой
+            var document = DocumentHost.Open(viewModel, viewModel.Title, Guid.NewGuid().ToString());
+            if (document == null)
+                return;
 
-            var owner = FindActiveWindow();
-            if (owner != null && !ReferenceEquals(owner, window))
-                window.Owner = owner;
-
-            return window.ShowDialog() == true;
+            viewModel.RequestClose += (sender, saved) => document.RequestClose();
         }
 
         public bool Confirm(string message, string caption)

@@ -7,8 +7,12 @@ using ParkApp.components.ViewModel;
 namespace ParkApp.components.View
 {
     /// <summary>
-    /// Открывает окна разделов и настроек. Какое окно соответствует разделу —
+    /// Открывает разделы и настройки. Какой экран соответствует разделу —
     /// знает только слой View.
+    ///
+    /// Разделы открываются вкладками в том окне, с которым сейчас работают;
+    /// настройки остаются модальным окном — это диалог, а не документ, и
+    /// держать его открытым рядом незачем.
     /// </summary>
     public class WpfMainDialogService : IMainDialogService
     {
@@ -28,11 +32,11 @@ namespace ParkApp.components.View
             switch (section)
             {
                 case AppSection.Fines:
-                    Show(new FinesWindow(_fineListFactory()));
+                    DocumentHost.Open(_fineListFactory(), "Книга постановлений", "Штрафы");
                     break;
 
                 case AppSection.DispatchOrders:
-                    Show(new DispatchWindow(_dispatchFactory()));
+                    DocumentHost.Open(_dispatchFactory(), "Наряд на выход", "Наряд");
                     break;
 
                 default:

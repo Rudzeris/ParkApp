@@ -1,4 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
+using ParkApp.components.View;
+using ParkApp.components.ViewModel;
 
 namespace ParkApp
 {
@@ -13,11 +15,14 @@ namespace ParkApp
 
             AppServices.Initialize();
 
-            var window = new MainWindow
-            {
-                DataContext = AppServices.CreateMainViewModel()
-            };
+            var main = AppServices.CreateMainViewModel();
+            var shell = new ShellViewModel();
 
+            // список машин открыт сразу: с него начинается работа,
+            // и пустое окно при запуске выглядело бы поломкой
+            shell.Open(main.Cars, "Машины", "Машины");
+
+            var window = new ShellWindow(new ShellHostViewModel(main, shell));
             window.Show();
         }
     }

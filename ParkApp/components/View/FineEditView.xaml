@@ -1,17 +1,14 @@
-<Window x:Class="ParkApp.components.View.FineEditWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{Binding Title}" Height="640" Width="680"
-        WindowStartupLocation="CenterOwner"
-        ResizeMode="CanMinimize">
+<UserControl x:Class="ParkApp.components.View.FineEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Window.Resources>
+    <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-    </Window.Resources>
+    </UserControl.Resources>
 
-    <Window.InputBindings>
+    <UserControl.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
-    </Window.InputBindings>
+    </UserControl.InputBindings>
 
     <Grid Margin="12">
         <Grid.ColumnDefinitions>
@@ -53,15 +50,33 @@
                  Text="{Binding OffenderName, UpdateSourceTrigger=PropertyChanged}"
                  ToolTip="В книге хранится в одной ячейке с датой правонарушения" />
 
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="Машина из реестра:" Margin="0,6" VerticalAlignment="Center" />
-        <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,6">
-            <Button DockPanel.Dock="Right" Content="Подставить" Width="110" Padding="0,2" Margin="6,0,0,0"
-                    Command="{Binding UseRegistryCarCommand}"
-                    ToolTip="Заполнить марку и ГРЗ из карточки машины" />
-            <ComboBox ItemsSource="{Binding Cars}"
-                      DisplayMemberPath="Display"
-                      SelectedItem="{Binding SelectedCar}" />
-        </DockPanel>
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Машина из реестра:" Margin="0,6" VerticalAlignment="Top" />
+        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,6">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                           Foreground="#666" Text="{Binding CarSearchStatus}" />
+                <TextBox Text="{Binding CarSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}">
+                    <TextBox.ToolTip>
+                        <StackPanel>
+                            <TextBlock Text="Поиск по номеру, VIN и марке. Список сужается по мере ввода." />
+                            <TextBlock Text="&quot;0123АВ&quot;  — точное совпадение" FontFamily="Consolas" Margin="0,4,0,0" />
+                            <TextBlock Text="*123*     — любые символы вокруг, в том числе ни одного" FontFamily="Consolas" />
+                            <TextBlock Text="камаз 43  — похожие слова, опечатка прощается" FontFamily="Consolas" />
+                        </StackPanel>
+                    </TextBox.ToolTip>
+                </TextBox>
+            </DockPanel>
+
+            <DockPanel Margin="0,4,0,0">
+                <Button DockPanel.Dock="Right" Content="Подставить" Width="110" Padding="0,2" Margin="6,0,0,0"
+                        Command="{Binding UseRegistryCarCommand}"
+                        ToolTip="Заполнить марку и ГРЗ из карточки машины" />
+                <ComboBox ItemsSource="{Binding Cars}"
+                          DisplayMemberPath="Display"
+                          SelectedItem="{Binding SelectedCar}"
+                          MaxDropDownHeight="380" />
+            </DockPanel>
+        </StackPanel>
 
         <TextBlock Grid.Row="5" Grid.Column="0" Text="Марка АТ:" Margin="0,6" VerticalAlignment="Center" />
         <TextBox Grid.Row="5" Grid.Column="1" Margin="0,6"
@@ -128,4 +143,4 @@
         </StackPanel>
 
     </Grid>
-</Window>
+</UserControl>

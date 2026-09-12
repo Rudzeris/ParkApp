@@ -38,6 +38,10 @@ namespace ParkApp.components.ViewModel
         private string _notes;
         private CarOption _selectedCar;
         private string _scanPath;
+        private string _carSearch;
+
+        /// <summary>Все машины реестра; Cars — то, что осталось после поиска.</summary>
+        private readonly List<CarOption> _allCars = new List<CarOption>();
 
         public FineEditViewModel(
             FineService fines,
@@ -57,7 +61,11 @@ namespace ParkApp.components.ViewModel
             Errors = new ObservableCollection<string>();
 
             foreach (var car in cars ?? Enumerable.Empty<Car>())
-                Cars.Add(CarOption.ForCar(car));
+            {
+                var option = CarOption.ForCar(car);
+                _allCars.Add(option);
+                Cars.Add(option);
+            }
 
             _resolutionNumber = fine.ResolutionNumber;
             _resolutionDate = fine.ResolutionDate == default(DateTime) ? (DateTime?)null : fine.ResolutionDate;
@@ -86,6 +94,56 @@ namespace ParkApp.components.ViewModel
         public event EventHandler<bool> RequestClose;
 
         public ObservableCollection<CarOption> Cars { get; private set; }
+
+        /// <summary>
+        /// Поиск машины. Список машин длинный, а человек помнит либо номер,
+        /// либо марку, либо кусок VIN — по мере ввода список сокращается.
+        ///
+        ///   «0123АВ»  — точное совпадение;
+        ///   *123*     — звёздочка это любые символы, в том числе ни одного;
+        ///   камаз 43  — похожие слова, опечатка прощается.
+        /// </summary>
+        public string CarSearch
+        {
+            get { return _carSearch; }
+            set
+            {
+                if (SetProperty(ref _carSearch, value))
+                    FilterCars();
+            }
+        }
+
+        /// <summary>Сколько машин осталось после поиска — видно, что список сузился.</summary>
+        public string CarSearchStatus
+        {
+            get
+            {
+                if (Cars.Count == _allCars.Count)
+                    return string.Format("машин: {0}", _allCars.Count);
+
+                return Cars.Count == 0
+                    ? "ничего не найдено"
+                    : string.Format("найдено: {0} из {1}", Cars.Count, _allCars.Count);
+            }
+        }
+
+        private void FilterCars()
+        {
+            var query = SearchQuery.Parse(_carSearch);
+
+            // выбранная машина не должна пропасть из списка от того,
+            // что человек набрал в поиске что-то другое
+            var selected = _selectedCar;
+
+            Cars.Clear();
+            foreach (var car in _allCars.Where(c => query.Matches(c.SearchFields)))
+                Cars.Add(car);
+
+            if (selected != null && !Cars.Contains(selected))
+                Cars.Insert(0, selected);
+
+            OnPropertyChanged("CarSearchStatus");
+        }
         public ObservableCollection<string> Errors { get; private set; }
 
         public ICommand UseRegistryCarCommand { get; private set; }

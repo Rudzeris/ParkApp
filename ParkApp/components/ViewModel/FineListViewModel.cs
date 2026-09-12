@@ -319,8 +319,16 @@ namespace ParkApp.components.ViewModel
         private void ShowEditor(Fine fine, bool isNew)
         {
             var editor = new FineEditViewModel(_fines, _scans, _fileDialogs, _allCars, fine, isNew);
-            if (_dialogs.ShowEditor(editor))
-                Reload();
+
+            // редактор открывается вкладкой и живёт сам по себе; список
+            // перечитывается, когда запись сохранили
+            editor.RequestClose += (sender, saved) =>
+            {
+                if (saved)
+                    Reload();
+            };
+
+            _dialogs.OpenEditor(editor);
         }
 
         private async void Delete()

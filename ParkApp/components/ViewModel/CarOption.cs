@@ -15,11 +15,24 @@ namespace ParkApp.components.ViewModel
         }
 
         public CarOption(string vin, string plate, string display)
+            : this(vin, plate, display, null)
+        {
+        }
+
+        public CarOption(string vin, string plate, string display, string[] searchFields)
         {
             Vin = vin;
             Plate = plate;
             Display = display;
+            SearchFields = searchFields ?? new[] { display };
         }
+
+        /// <summary>
+        /// По чему ищется машина: все её номера, VIN и оба написания марки.
+        /// Искать по строке списка нельзя — в ней значения склеены разделителями,
+        /// и «точное совпадение» перестало бы быть точным.
+        /// </summary>
+        public string[] SearchFields { get; private set; }
 
         /// <summary>VIN машины. null — «все машины» в фильтре.</summary>
         public string Vin { get; private set; }
@@ -31,7 +44,20 @@ namespace ParkApp.components.ViewModel
 
         public static CarOption ForCar(Car car)
         {
-            return new CarOption(car.Vin, FirstPlate(car), Describe(car));
+            return new CarOption(car.Vin, FirstPlate(car), Describe(car), SearchFieldsOf(car));
+        }
+
+        private static string[] SearchFieldsOf(Car car)
+        {
+            if (car == null)
+                return new string[0];
+
+            var fields = new List<string> { car.Model, car.ModelLatin, car.Vin };
+
+            if (car.Numbers != null)
+                fields.AddRange(car.Numbers.Where(n => n != null).Select(n => n.Text));
+
+            return fields.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray();
         }
 
         /// <summary>Первый гос. номер машины.</summary>
