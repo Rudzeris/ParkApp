@@ -117,6 +117,21 @@ namespace ParkApp.components.Infrastructure.Excel
         /// но при этом рядом может стоять похожий столбец («Модель и № двигателя»),
         /// который не должен перехватить поиск раньше точного совпадения.
         /// </summary>
+        /// <summary>
+        /// Все столбцы с таким названием, слева направо. В рабочей таблице
+        /// «Марка автомобиля» встречается дважды — по-русски и латиницей.
+        /// </summary>
+        public IEnumerable<int> Columns(params string[] names)
+        {
+            var wanted = names.Select(Normalize).Where(n => n.Length > 0).ToList();
+
+            for (var i = 0; i < _headers.Count; i++)
+            {
+                if (wanted.Contains(Normalize(_headers[i])))
+                    yield return i;
+            }
+        }
+
         public int Column(params string[] names)
         {
             foreach (var name in names)

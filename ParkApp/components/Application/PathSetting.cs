@@ -59,7 +59,7 @@ namespace ParkApp.components.Application
             new PathSettingDescription(PathSetting.CarsFile, "Файл машин",
                 "пусто — «Машины\\Машины.xlsx» в папке справочников", false, TableFileKind.Cars),
             new PathSettingDescription(PathSetting.PeopleFile, "Файл людей",
-                "пусто — «Люди\\Люди.xlsx» в папке справочников", false, TableFileKind.People),
+                "пусто — лист «Должностные лица» в файле машин", false, TableFileKind.People),
             new PathSettingDescription(PathSetting.FinesFile, "Файл штрафов",
                 "пусто — «Штрафы\\Штрафы.xlsx» в папке документов", false, TableFileKind.Fines),
             new PathSettingDescription(PathSetting.DispatchFile, "Файл нарядов",

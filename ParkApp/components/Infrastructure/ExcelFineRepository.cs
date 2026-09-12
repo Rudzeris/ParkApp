@@ -66,6 +66,28 @@ namespace ParkApp.components.Infrastructure
             new Dictionary<string, RawCell[]>(StringComparer.OrdinalIgnoreCase);
         private static List<string> _order = new List<string>();
 
+        /// <summary>
+        /// Строки книги, которые записями не являются: «ОБЩАЯ СУММА» с формулой
+        /// над данными, разделители, пометки. Номера постановления у них нет,
+        /// сопоставить их не с чем — но и выбросить нельзя: это чужая книга.
+        /// Помним, после скольких записей строка стояла, и возвращаем туда же.
+        /// </summary>
+        private static List<ForeignRow> _foreign = new List<ForeignRow>();
+
+        private class ForeignRow
+        {
+            public ForeignRow(int after, RawCell[] cells)
+            {
+                After = after;
+                Cells = cells;
+            }
+
+            /// <summary>Сколько записей книги стояло выше этой строки.</summary>
+            public int After { get; private set; }
+
+            public RawCell[] Cells { get; private set; }
+        }
+
         public static string SheetName
         {
             get { return AppSheets.Name(SheetKind.Fines); }
@@ -174,6 +196,7 @@ namespace ParkApp.components.Infrastructure
             _headers = sheet.Headers.ToList();
             _rawByNumber = new Dictionary<string, RawCell[]>(StringComparer.OrdinalIgnoreCase);
             _order = new List<string>();
+            _foreign = new List<ForeignRow>();
 
             var fines = new List<Fine>();
 
@@ -182,9 +205,15 @@ namespace ParkApp.components.Infrastructure
                 var row = sheet.Rows[i];
                 var number = SheetTable.GetString(row, layout.Number);
 
-                // строка без номера постановления — это ключ записи, без него она бессмысленна
+                // строка без номера постановления записью не является: в книге
+                // сверху стоит «ОБЩАЯ СУММА» с формулой, бывают и разделители.
+                // Ключа у неё нет, но она часть документа — запоминаем как есть
                 if (number == null)
+                {
+                    _foreign.Add(new ForeignRow(fines.Count,
+                        i < sheet.RawRows.Count ? sheet.RawRows[i] : null));
                     continue;
+                }
 
                 var fine = new Fine
                 {
@@ -286,12 +315,24 @@ namespace ParkApp.components.Infrastructure
             var nextRowNumber = NextRowNumber(fines);
             var rows = new List<IList<XlsxCell>>();
 
+            var known = _rawByNumber.Count;
+            var written = 0;
+
             foreach (var fine in Ordered(fines))
             {
+                if (written < known)
+                    AppendForeign(rows, headers.Count, written);
+
                 RawCell[] raw;
                 _rawByNumber.TryGetValue(Key(fine.ResolutionNumber), out raw);
 
-                var cells = new XlsxCell[headers.Count];
+                // строка книги может быть шире шапки: примечания дописывают
+                // в столбцы правее последнего заголовка, и обрезать их нельзя
+                var width = headers.Count;
+                if (raw != null && raw.Length > width)
+                    width = raw.Length;
+
+                var cells = new XlsxCell[width];
 
                 // сначала возвращаем на место всё, что было в строке
                 if (raw != null)
@@ -324,9 +365,38 @@ namespace ParkApp.components.Infrastructure
                 }
 
                 rows.Add(cells.ToList());
+                written++;
             }
 
+            // то, что стояло ниже последней записи
+            AppendForeign(rows, headers.Count, known);
+
             XlsxWriter.Write(AppPaths.FinesFile, SheetName, headers, rows);
+        }
+
+        /// <summary>Возвращает на место строки книги, которые записями не являются.</summary>
+        private static void AppendForeign(List<IList<XlsxCell>> rows, int headerCount, int after)
+        {
+            foreach (var foreign in _foreign.Where(f => f.After == after))
+            {
+                var raw = foreign.Cells;
+                if (raw == null)
+                {
+                    rows.Add(new List<XlsxCell>());
+                    continue;
+                }
+
+                var width = Math.Max(headerCount, raw.Length);
+                var cells = new XlsxCell[width];
+
+                for (var i = 0; i < raw.Length; i++)
+                {
+                    if (raw[i] != null)
+                        cells[i] = XlsxCell.Raw(raw[i].Value, raw[i].IsText, raw[i].Style, raw[i].Formula);
+                }
+
+                rows.Add(cells.ToList());
+            }
         }
 
         /// <summary>Существующие строки в прежнем порядке, новые — в конец.</summary>
