@@ -6,8 +6,12 @@
     /// </summary>
     public interface IFineDialogService
     {
-        /// <summary>Показывает модальный редактор штрафа. true — пользователь сохранил.</summary>
-        bool ShowEditor(FineEditViewModel viewModel);
+        /// <summary>
+        /// Открывает редактор записи. Он больше не модальный — это вкладка,
+        /// и рядом можно держать открытой саму книгу. Поэтому результат
+        /// возвращается не отсюда, а событием <see cref="FineEditViewModel.RequestClose"/>.
+        /// </summary>
+        void OpenEditor(FineEditViewModel viewModel);
 
         /// <summary>Вопрос «да/нет».</summary>
         bool Confirm(string message, string caption);

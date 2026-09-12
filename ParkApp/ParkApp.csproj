@@ -66,26 +66,50 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+    <Page Include="components\View\CarsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="components\View\FinesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="components\View\FineEditView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="components\View\DispatchView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="components\View\ShellWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Compile Include="components\View\CarsView.xaml.cs">
+      <DependentUpon>CarsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="components\View\FinesView.xaml.cs">
+      <DependentUpon>FinesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="components\View\FineEditView.xaml.cs">
+      <DependentUpon>FineEditView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="components\View\DispatchView.xaml.cs">
+      <DependentUpon>DispatchView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="components\View\ShellWindow.xaml.cs">
+      <DependentUpon>ShellWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="components\View\DocumentHost.cs" />
+    <Compile Include="components\ViewModel\DocumentViewModel.cs" />
+    <Compile Include="components\ViewModel\ShellViewModel.cs" />
+    <Compile Include="components\ViewModel\ShellHostViewModel.cs" />
+    <Compile Include="components\Application\SearchQuery.cs" />
         <ApplicationDefinition Include="App.xaml">
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
         </ApplicationDefinition>
-        <Page Include="MainWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-            <SubType>Designer</SubType>
-        </Page>
-        <Page Include="components\View\FinesWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-            <SubType>Designer</SubType>
-        </Page>
-        <Page Include="components\View\FineEditWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-            <SubType>Designer</SubType>
-        </Page>
-        <Page Include="components\View\DispatchWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-            <SubType>Designer</SubType>
-        </Page>
         <Page Include="components\View\SettingsWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
             <SubType>Designer</SubType>
@@ -154,18 +178,6 @@
         <Compile Include="components\Infrastructure\WordDispatchPrinter.cs" />
         <Compile Include="components\Infrastructure\WpfFileDialogService.cs" />
         <Compile Include="components\Infrastructure\XmlAppSettings.cs" />
-        <Compile Include="components\View\FineEditWindow.xaml.cs">
-            <DependentUpon>FineEditWindow.xaml</DependentUpon>
-            <SubType>Code</SubType>
-        </Compile>
-        <Compile Include="components\View\FinesWindow.xaml.cs">
-            <DependentUpon>FinesWindow.xaml</DependentUpon>
-            <SubType>Code</SubType>
-        </Compile>
-        <Compile Include="components\View\DispatchWindow.xaml.cs">
-            <DependentUpon>DispatchWindow.xaml</DependentUpon>
-            <SubType>Code</SubType>
-        </Compile>
         <Compile Include="components\View\SettingsWindow.xaml.cs">
             <DependentUpon>SettingsWindow.xaml</DependentUpon>
             <SubType>Code</SubType>
@@ -197,10 +209,6 @@
         <Compile Include="components\ViewModel\SettingsViewModel.cs" />
         <Compile Include="components\ViewModel\SheetSettingViewModel.cs" />
         <Compile Include="components\ViewModel\ViewModelBase.cs" />
-        <Compile Include="MainWindow.xaml.cs">
-            <DependentUpon>MainWindow.xaml</DependentUpon>
-            <SubType>Code</SubType>
-        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs">

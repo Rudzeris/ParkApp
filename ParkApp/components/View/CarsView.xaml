@@ -1,0 +1,37 @@
+<UserControl x:Class="ParkApp.components.View.CarsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+<DockPanel>
+
+        <Border DockPanel.Dock="Top" Margin="6,6,6,0" Padding="8"
+                Background="#FDF3F2" BorderBrush="#C0392B" BorderThickness="1"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Error}" Foreground="#C0392B" TextWrapping="Wrap" />
+        </Border>
+
+        <Border DockPanel.Dock="Top" Margin="6,6,6,0" Padding="8"
+                Background="#FDF8E3" BorderBrush="#B7950B" BorderThickness="1"
+                Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Warning}" Foreground="#7D6608" TextWrapping="Wrap" />
+        </Border>
+
+        <ListView Margin="6" ItemsSource="{Binding Cars}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Марка" Width="150" DisplayMemberBinding="{Binding Model}" />
+                    <GridViewColumn Header="Гос. рег. знак" Width="160" DisplayMemberBinding="{Binding Plates}" />
+                    <GridViewColumn Header="VIN" Width="180" DisplayMemberBinding="{Binding Vin}" />
+                    <GridViewColumn Header="Год" Width="60" DisplayMemberBinding="{Binding YearText}" />
+                    <GridViewColumn Header="Местонахождение" Width="120" DisplayMemberBinding="{Binding LocationText}" />
+                    <GridViewColumn Header="Куда относится" Width="120" DisplayMemberBinding="{Binding Affiliation}" />
+                    <GridViewColumn Header="Должностное лицо" Width="200" DisplayMemberBinding="{Binding OfficialText}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</UserControl>
