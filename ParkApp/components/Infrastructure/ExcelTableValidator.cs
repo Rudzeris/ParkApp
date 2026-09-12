@@ -90,8 +90,10 @@ namespace ParkApp.components.Infrastructure
                     break;
 
                 default:
-                    if (sheet.Column(ExcelCarRepository.VinNames) < 0)
-                        return Invalid("не найден обязательный столбец «VIN» — по нему документы связываются с машиной");
+                    // VIN обязательным быть не может: в рабочей таблице он заполнен
+                    // у части машин, и требовать его значило бы забраковать живой файл
+                    if (sheet.Column(ExcelCarRepository.ModelNames) < 0)
+                        return Invalid("не найден столбец «Марка автомобиля» — без него это не список машин");
 
                     Optional(sheet, missing, "Марка автомобиля", ExcelCarRepository.ModelNames);
                     Optional(sheet, missing, "Год выпуска", ExcelCarRepository.YearNames);

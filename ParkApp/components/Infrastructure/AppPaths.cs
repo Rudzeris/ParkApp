@@ -10,7 +10,7 @@ namespace ParkApp.components.Infrastructure
     /// <code>
     /// &lt;общие справочники&gt;/          SharedRoot — одинаковы на всех рабочих местах
     /// ├── Машины/Машины.xlsx
-    /// └── Люди/Люди.xlsx
+    /// └── (должностные лица — листом в той же книге)
     ///
     /// &lt;свои документы&gt;/             DataRoot — у каждого свои
     /// └── Штрафы/
@@ -25,7 +25,6 @@ namespace ParkApp.components.Infrastructure
     public static class AppPaths
     {
         public const string CarsFolderName = "Машины";
-        public const string PeopleFolderName = "Люди";
         public const string FinesFolderName = "Штрафы";
         public const string DispatchFolderName = "Наряды";
         public const string TemplatesFolderName = "Templates";
@@ -34,7 +33,6 @@ namespace ParkApp.components.Infrastructure
         public const string ScansFolderName = "Сканы";
 
         public const string CarsFileName = "Машины.xlsx";
-        public const string PeopleFileName = "Люди.xlsx";
         public const string FinesFileName = "Штрафы.xlsx";
         public const string DispatchFileName = "Наряды.xlsx";
 
@@ -73,12 +71,16 @@ namespace ParkApp.components.Infrastructure
             }
         }
 
+        /// <summary>
+        /// Файл должностных лиц. По умолчанию — тот же, что и у машин: в рабочей
+        /// книге они лежат отдельным листом, а не отдельным файлом. Разнести их
+        /// по разным файлам можно в настройках.
+        /// </summary>
         public static string PeopleFile
         {
             get
             {
-                return FromSettings(PathSetting.PeopleFile)
-                       ?? Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName);
+                return FromSettings(PathSetting.PeopleFile) ?? CarsFile;
             }
         }
 
@@ -132,7 +134,7 @@ namespace ParkApp.components.Infrastructure
                 case PathSetting.CarsFile:
                     return Path.Combine(SharedRoot, CarsFolderName, CarsFileName);
                 case PathSetting.PeopleFile:
-                    return Path.Combine(SharedRoot, PeopleFolderName, PeopleFileName);
+                    return CarsFile;
                 case PathSetting.FinesFile:
                     return Path.Combine(DataRoot, FinesFolderName, FinesFileName);
                 case PathSetting.DispatchFile:

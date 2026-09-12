@@ -75,7 +75,7 @@ namespace ParkApp.components.Application
 
             foreach (var car in cars)
             {
-                var vin = (car.Vin ?? string.Empty).Trim();
+                var vin = car.Key;
 
                 CarSchedule schedule;
                 if (!schedulesByVin.TryGetValue(vin, out schedule))
@@ -189,7 +189,7 @@ namespace ParkApp.components.Application
                 {
                     Date = day,
                     OrderNumber = plan.OrderNumber,
-                    CarVin = i.Car != null ? i.Car.Vin : null,
+                    CarVin = i.Car != null ? i.Car.Key : null,
                     CarBrand = i.Brand,
                     CarPlate = i.Plate,
                     GroupName = i.GroupName,
@@ -221,7 +221,7 @@ namespace ParkApp.components.Application
 
             foreach (var item in plan.Items)
             {
-                var vin = item.Car != null ? (item.Car.Vin ?? string.Empty).Trim() : string.Empty;
+                var vin = item.Car != null ? item.Car.Key : string.Empty;
                 if (vin.Length == 0)
                     continue;
 
@@ -271,7 +271,7 @@ namespace ParkApp.components.Application
         {
             return new CarSchedule
             {
-                CarVin = car.Vin,
+                CarVin = car.Key,
                 CarPlate = FirstPlate(car),
                 DepartureTime = DefaultDeparture,
                 ReturnTime = DefaultReturn,

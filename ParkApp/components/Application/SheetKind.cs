@@ -39,8 +39,8 @@ namespace ParkApp.components.Application
     {
         private static readonly List<SheetDescription> Items = new List<SheetDescription>
         {
-            new SheetDescription(SheetKind.Cars, "Лист машин", "Машины"),
-            new SheetDescription(SheetKind.People, "Лист людей", "Люди"),
+            new SheetDescription(SheetKind.Cars, "Лист машин", "Список всех машин"),
+            new SheetDescription(SheetKind.People, "Лист должностных лиц", "Должностные лица"),
             new SheetDescription(SheetKind.Fines, "Лист штрафов", "Штрафы"),
             new SheetDescription(SheetKind.Affiliation, "Лист «Куда относится»", "Куда относится"),
             new SheetDescription(SheetKind.VehicleType, "Лист «Тип машины»", "Тип машины"),

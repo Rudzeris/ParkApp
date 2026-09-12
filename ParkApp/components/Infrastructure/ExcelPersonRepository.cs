@@ -9,8 +9,16 @@ using ParkApp.components.Infrastructure.Excel;
 namespace ParkApp.components.Infrastructure
 {
     /// <summary>
-    /// Должностные лица из «Люди\Люди.xlsx». Как и машины, справочник пока только читается:
-    /// редактор появится вместе с карточкой машины (этап 1).
+    /// Должностные лица. В рабочей книге это лист «Должностные лица» в том же
+    /// файле, что и машины: отдельного файла людей у заказчика нет, и заводить
+    /// его вместо существующего листа значило бы плодить вторую копию.
+    /// Путь и имя листа настраиваются, поэтому отдельный файл тоже возможен.
+    ///
+    /// На листе всего три столбца: «№», «Должностное лицо» и «Был». Должность,
+    /// звание и фамилия записаны одной строкой — так их и печатают в документах,
+    /// поэтому разбирать их на части незачем.
+    ///
+    /// Справочник пока только читается: редактор появится вместе с карточкой машины.
     /// </summary>
     public class ExcelPersonRepository : IPersonRepository
     {
@@ -20,7 +28,8 @@ namespace ParkApp.components.Infrastructure
         }
 
         public static readonly string[] IdNames = { "№", "№ п/п", "Id", "Код" };
-        public static readonly string[] FullNameNames = { "ФИО", "Ф.И.О.", "Фамилия, имя, отчество" };
+        public static readonly string[] FullNameNames =
+            { "Должностное лицо", "ФИО", "Ф.И.О.", "Фамилия, имя, отчество" };
         public static readonly string[] PositionNames = { "Должность" };
         public static readonly string[] RankNames = { "Звание", "Воинское звание" };
         public static readonly string[] PhoneNames = { "Телефон", "Номер телефона", "Тел." };
@@ -46,7 +55,12 @@ namespace ParkApp.components.Infrastructure
                         "Файл людей не найден:{0}{1}{0}{0}Проверьте путь в настройках — возможно, файл переместили.",
                         Environment.NewLine, path));
 
-                CreateDemoFile(path);
+                // по умолчанию люди лежат в книге машин: создавать её должен
+                // репозиторий машин, иначе заготовка людей затрёт список машин
+                if (string.Equals(path, AppPaths.CarsFile, StringComparison.OrdinalIgnoreCase))
+                    ExcelCarRepository.EnsureDemoFile();
+                else
+                    CreateDemoFile(path);
             }
 
             // строго по имени: имя листа настраивается, и молча прочитать
@@ -64,8 +78,10 @@ namespace ParkApp.components.Infrastructure
             var phoneColumn = sheet.Column(PhoneNames);
 
             if (nameColumn < 0)
-                throw new InvalidOperationException(
-                    "В файле «Люди.xlsx» не найден столбец «ФИО».");
+                throw new InvalidOperationException(string.Format(
+                    "На листе «{0}» не найден столбец «Должностное лицо» или «ФИО».{1}{1}" +
+                    "Проверьте имя листа в настройках: людей приложение ищет там же, " +
+                    "где и машины.", SheetName, Environment.NewLine));
 
             var people = new List<Person>();
             var autoId = 0;
@@ -95,28 +111,42 @@ namespace ParkApp.components.Infrastructure
 
         private static void CreateDemoFile(string path)
         {
-            var headers = new[] { "№", "Должность", "Звание", "ФИО", "Телефон" };
+            var sheet = DemoSheet();
+            XlsxWriter.Write(path, sheet.Name, sheet.Headers, sheet.Rows);
+        }
+
+        /// <summary>
+        /// Лист должностных лиц для файла-образца. Шапка повторяет рабочую:
+        /// номер, одна строка «должность звание фамилия» и «Был» — кто занимал
+        /// эту должность раньше.
+        /// </summary>
+        public static XlsxSheet DemoSheet()
+        {
+            var headers = new[] { "№", "Должностное лицо", "Был" };
 
             var rows = new List<IList<XlsxCell>>
             {
                 new List<XlsxCell>
                 {
-                    XlsxCell.Number(1), XlsxCell.Text("Начальник гаража"), XlsxCell.Text("майор"),
-                    XlsxCell.Text("Иванов Иван Иванович"), XlsxCell.Text("+7 900 000-00-01")
+                    XlsxCell.Number(1),
+                    XlsxCell.Text("начальник автомобильной службы майор Иванов И.И."),
+                    XlsxCell.Empty
                 },
                 new List<XlsxCell>
                 {
-                    XlsxCell.Number(2), XlsxCell.Text("Водитель"), XlsxCell.Text("сержант"),
-                    XlsxCell.Text("Петров Пётр Петрович"), XlsxCell.Text("+7 900 000-00-02")
+                    XlsxCell.Number(2),
+                    XlsxCell.Text("заместитель командира по вооружению подполковник Сидоров С.С."),
+                    XlsxCell.Empty
                 },
                 new List<XlsxCell>
                 {
-                    XlsxCell.Number(3), XlsxCell.Text("Водитель"), XlsxCell.Text("рядовой"),
-                    XlsxCell.Text("Сидоров Сидор Сидорович"), XlsxCell.Text("+7 900 000-00-03")
+                    XlsxCell.Number(3),
+                    XlsxCell.Text("начальник штаба подполковник Антонов А.А."),
+                    XlsxCell.Empty
                 }
             };
 
-            XlsxWriter.Write(path, SheetName, headers, rows);
+            return new XlsxSheet(SheetName, headers, rows);
         }
     }
 }
