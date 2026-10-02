@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Обвязка для сборки на Linux. Исходники копируются из репозитория как есть.
+    LangVersion 7.3 — то, что по умолчанию даёт старый .csproj под net48:
+    собирать новее значило бы пропустить ошибки, которые увидит Visual Studio.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <LangVersion>7.3</LangVersion>
+    <RootNamespace>ParkApp</RootNamespace>
+    <AssemblyName>ParkApp</AssemblyName>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <WarningLevel>4</WarningLevel>
+    <!-- временный проект второго прохода разметки не видит свойств из пакетов -->
+    <TargetFrameworkRootPath>$(HOME)/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/build/</TargetFrameworkRootPath>
+    <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="DocX" Version="2.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="src/App.xaml" />
+    <Compile Include="src/**/*.cs" Exclude="src/obj/**;src/bin/**;src/**/*.g.cs;src/**/*.g.i.cs" />
+    <Page Include="src/components/View/*.xaml" />
+  </ItemGroup>
+</Project>

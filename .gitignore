@@ -47,3 +47,7 @@ Generated_Code/
 __pycache__/
 *.pyc
 tools/.tmp/
+
+# прогон настоящего кода: книги-образцы и рабочие копии создаются заново
+tools/realrun/fixtures/
+tools/realrun/work/
